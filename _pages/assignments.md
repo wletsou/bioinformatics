@@ -4,9 +4,7 @@ title: "Assignments"
 permalink: /assignments/
 ---
 
-We'll be completing all assignments in R, so make sure you have both [R](https://cran.r-project.org/) and [RStudio](https://posit.co/downloads/).
-
-We'll be using several packages from [Bioconductor](http://www.bioconductor.org/).  To install a package for the first time, use
+We'll be completing all assignments in R, so make sure you have both [R](https://cran.r-project.org/) and [RStudio](https://posit.co/downloads/).  We'll be using several packages from [Bioconductor](http://www.bioconductor.org/).  To install a package for the first time, use
 
 ```
 BiocManager::install("SNPRelate") # install the package SNPRelate, in quotes
