@@ -4,4 +4,4 @@ title: "Files"
 permalink: /files/
 ---
 
-[CHB+YRI+CEU.txt](/docs/CHB+YRI+CEU.txt)
+[CHB+YRI+CEU.txt](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB%2BYRI%2BCEU.txt)
