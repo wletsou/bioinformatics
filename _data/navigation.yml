@@ -2,7 +2,7 @@
 main:
   - title: "Home"
     url: https://wletsou.github.io/bioinformatics/
-  - title: "Lecture Slides"
+  - title: "Lecture slides"
     url: https://wletsou.github.io/bioinformatics/lecture_slides/
   - title: "Assignments"
     url: https://wletsou.github.io/bioinformatics/assignments/
