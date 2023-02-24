@@ -1,1 +1,3 @@
+---
 permalinnk: /assignments/
+---
