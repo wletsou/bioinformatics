@@ -1,5 +1,5 @@
 ---
-layout: "page"
+layout: "single"
 title: "Principal components analysis of 1000GP populations"
 permalink: /assignments/pca/
 ---
