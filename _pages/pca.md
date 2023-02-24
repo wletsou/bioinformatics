@@ -1,6 +1,8 @@
 ---
 layout: "single"
 title: "Principal components analysis of 1000GP populations"
+toc: true
+toc_label: "Contents"
 permalink: /assignments/pca/
 ---
 
@@ -36,4 +38,4 @@ where the name of the field is enclosed in quotes.
 
 ### Pricipal components analysis
 
-The 
+The populations in our dataset can be separated into clusters based on their genotypes.  The inferred groups help control for confoundng due to ancestry and are also more reliable than self-reported race in association studies.  To see how it works, suppose \\(\mathbf{X}\\) is an \\(n\times m\\) (standardized) genotype matrix
