@@ -1,5 +1,5 @@
 ---
 type: "single"
-title: "Lecture Slides"
+title: "Lecture slides"
 permalink: /lecture_slides/
 ---
