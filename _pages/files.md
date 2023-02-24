@@ -1,5 +1,5 @@
 ---
 layout: page
 title: "Files"
-permalink: /Files/
+permalink: /files/
 ---
