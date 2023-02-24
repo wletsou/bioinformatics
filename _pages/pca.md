@@ -11,18 +11,19 @@ First we'll see how individuals can be separated by genetic ancestry using princ
 ```
 library(SNPRelate)
 library(SeqArray)
+```
 
-Download one of the vcf files from the [Files](https://wletsou.github.io/bioinformatics/files) page of a single chromosome containing just the CEU, YRI, and CHB populations.  Once you have the file, store the file name as a variable:
+Download one of the vcf files from the [Files](https://wletsou.github.io/bioinformatics/files) page of a single chromosome containing just the CEU, YRI, and CHB populations.  Once you have the file, store its name as a variable:
 
 ```
-vcf &lt;- "path/to/file.vcf.gz"
+vcf <- "path/to/file.vcf.gz"
 ```
 
 Now we'll convert the vcf format to gds format.  I recommend simply changing the vcf.gz extension to gds.  This may take a minute to complete.  Then we'll import the gds file as a gds object.
 
 ```
 seqVCF2GDS(vcf.fn = vcf,"path/to/file.gds")
-genofile &lt;- seqOpen("path/to/file.gds")
+genofile <- seqOpen("path/to/file.gds")
 ```
 
 You can can see the various fields under <kbd>genofile</kbd> by printing it.  To access the data in one of the fields, do
