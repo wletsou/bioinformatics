@@ -1,0 +1,1 @@
+permalinnk: /assignments/
