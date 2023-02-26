@@ -47,4 +47,4 @@ To use <kbd>sim1000G</kbd> we first need to read in a vcf file.  vcf files can b
 vcf <- readVCF("path/to/file/CHB+YRI+CEU.chr1.vcf.gz", maxNumberOfVariants = 2000 , min_maf = 0.05 , max_maf = 0.95) # read 2000 variants from chr1 with MAF between 5% and 95%
 ```
 
-This step may take a minute two complete depending on the size of the file.
+This step may take a few minutes to complete depending on the size of the file, so be patient.
