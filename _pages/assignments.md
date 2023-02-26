@@ -16,4 +16,5 @@ Then to use the packae on any subsequent R session, simply run
 library(SNPRelate) # no quotes
 ```
 
-[Week 1](https://wletsou.github.io/bioinformatics/assignments/pca)
+* [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1)
+* [Week 2](https://wletsou.github.io/bioinformatics/assignments/week2)
