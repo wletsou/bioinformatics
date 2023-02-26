@@ -1,6 +1,6 @@
 ---
 layout: "single"
-title: "Simulating genotypes and kinship analysis"
+title: "Genotype simulation and kinship analysis"
 toc: true
 toc_label: "Contents"
 permalink: /assignments/week2/
@@ -15,11 +15,14 @@ library(GENESIS)
 library(GWASTools)
 ```
 
-We'll also want the package <kbd>data.table</kbd> from CRAN.  <kbd>data.table</kbd> is a more flexible structure than <kbd>data.frame</kbd>:
+We'll also want the packages <kbd>data.table</kbd> and <kbd>fields</kbd> from CRAN.  <kbd>data.table</kbd> is a more flexible structure than <kbd>data.frame</kbd> and <kbd>fields</kbd> is for plotting images.
 
 ```
 install.packages("data.table") # your first installation
 library(data.table) # all subsequent loadings
+
+install.packages("fields")
+library("fields")
 ```
 
 We'll also need the list of individuals again, available [here](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB%2BYRI%2BCEU.txt):
@@ -31,7 +34,7 @@ colnames(indivs) <- c("id","pop")
 
 ### Simulating haplotypes from a phased vcf file ###
 
-For the association study we'll be doing next week, we'll need genotypes of unrelated individuals with and without the disease phenotype of interest.  To protect subjects' privacy, real sequencing data are not readily accessible.  Instead, we'll have to simulate haplotypes from the 1KG vcf files.  The simulation program <kbd>sim1000G</kbd> works by drawing \\(m\\)-SNP haplotypes from an \\(m\\)-dimensional multivariate normal distirbution such that the *allele frquency* of each variant and *linkage disequilibrium* between each pair of variants is preserved.  <kbd>sim1000G</kbd> uses the observed correlation between variants to know what should be the pairwise correlation between any two SNPs in the simulated data.  In order for the correlation to be measured, the input data need to be *phased*, so that we know not only each subject's genotypes, but also which allele appears on which of the subject's two chromosomes.  For example, a line of a phased vcf file might look like
+For the association study we'll be doing next week, we'll need genotypes of unrelated individuals with and without the disease phenotype of interest.  To protect subjects' privacy, real sequencing data are not readily accessible.  Instead, we'll have to simulate haplotypes from the 1KG vcf files.  The simulation program [<kbd>sim1000G</kbd>](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-019-2611-1) works by drawing \\(m\\)-SNP haplotypes from an \\(m\\)-dimensional multivariate normal distirbution such that the *allele frquency* of each variant and *linkage disequilibrium* between each pair of variants is preserved.  <kbd>sim1000G</kbd> uses the observed correlation between variants to know what should be the pairwise correlation between any two SNPs in the simulated data.  In order for the correlation to be measured, the input data need to be *phased*, so that we know not only each subject's genotypes, but also which allele appears on which of the subject's two chromosomes.  For example, a line of a phased vcf file might look like
 
 ```
 1	14930	rs75454623	A	G	100	PASS	AC=284;AF=0.482228;AN=620;NS=2504;DP=42231;EAS_AF=0.4137;AMR_AF=0.5231;AFR_AF=0.4811;EUR_AF=0.5209;SAS_AF=0.4857;AA=a|||;VT=SNP	GT	1|0	1|0	1|0	1|0	0|1	1|1	0|1	0|1	1|1	1|0	0|1
@@ -51,7 +54,7 @@ This step may take a few minutes to complete depending on the size of the file, 
 
 #### Making a table of variants ####
 
-Before we generate haplotypes from this vcf file, we'll need to make PLINK *.map* and *.ped* files to be converted into gds objects.  A .map file is simply a manifest of the SNPs, their locations, and their alleles.  We'll make this one first.  You can access the sampled variants in the <kbd>$varid</kbd> field of your <kbd>vcf</kbd> objects.  We're going to split up these lines into "chr", "pos", "rsid", "ref",and "alt", and then <kbd>rbind</kbd> the rows together.  Do
+Before we generate haplotypes from this vcf file, we'll need to make PLINK *map* and *ped* files to be converted into gds objects.  A map file is simply a manifest of the SNPs, their locations, and their alleles.  We'll make this one first.  You can access the sampled variants in the <kbd>$varid</kbd> field of your <kbd>vcf</kbd> objects.  We're going to split up these lines into "chr", "pos", "rsid", "ref",and "alt", and then <kbd>rbind</kbd> the rows together.  Do
 
 ```
 variants <- data.frame(Reduce(rbind,lapply(vcf$varid,function(X) unlist(strsplit(X,split = " "))))) # variant info, chr, pos, rsid, ref, alt
@@ -77,7 +80,7 @@ We can achieve this format from our <kbd>variants</kbd> object using
 
 ```
 df.variants <- data.frame(chr = variants$chr,rsid = variants$rsid,X = rep(0,nrow(variants)),pos = variants$pos) # four columns of the PLINK map file
-write.table(df.variants,col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.chr1.simulation.map") # save the file with a name you'll use throughout
+write.table(df.variants,col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.simulation.chr1.map") # save the file with a name you'll use throughout
 ```
 
 #### Simulating individuals ####
@@ -126,7 +129,7 @@ dt.gt1.allele.ceu <- dt.gt1[,mapply(function(X,Y,Z) ifelse(X == 0,Y,Z),.SD,ref,a
 dt.gt2.allele.ceu <- dt.gt2[,mapply(function(X,Y,Z) ifelse(X == 0,Y,Z),.SD,ref,alt),.SDcols = 1:ncol(dt.gt2),by = .I] # convert 0/1 to ATCG
 ```
 
-This function converts the i<sup>th</sup> column from a number (0 or 1) to the i<sup>th</sup> entry of <kbd>ref</kbd> or <kbd>alt</kbd> depending on its value.  The arguments <kbd>.SDcols</kbd> and <kbd>by = .I</kbd> tell <kbd>data.table</kbd> to apply the function rowwise at each column individually.
+This function converts the \\(i\\)<sup>th</sup> column from a number (0 or 1) to the \\(i\\)<sup>th</sup> entry of <kbd>ref</kbd> or <kbd>alt</kbd> depending on its value.  The arguments <kbd>.SDcols</kbd> and <kbd>by = .I</kbd> tell <kbd>data.table</kbd> to apply the function rowwise at each column individually.
 
 Before we interleave the columns of these tables to make a ped file, **repeat the above procedure for the YRI and CHB populations** and generate appropriately named data tables.
 
@@ -154,7 +157,7 @@ we're ready to make a ped file and convert it into a gds object suitable for <kb
 fam <- data.frame(fid = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)),id = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)), mother = 0,father = 0,sex = sample(c(0,1),nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu),replace = TRUE),phenotype = 1) # numeric columns of ped file
 ```
 
-which should look something like
+This should look something like
 
 ```
 head(fam)
@@ -173,7 +176,7 @@ Now, to interleave the columns of our <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.a
 cbind(dt.gt1.allele.chb,dt.gt2.allele.chb))[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)]
 ```
 
-Then we'll group these tables (one for each population) in an R <kbd>list</kbd> and <kbd>Reduce</kbd> the <kbd>rbind</kbd> function over the three entries in the list to make a table with 300 rows, which we'll finally join to our <kbd>fam</kbd> object above.  Save this table as file using a similar naming scheme you used for the map file.
+Then we'll group these tables (one for each population) in an R <kbd>list</kbd> and <kbd>Reduce</kbd> the <kbd>rbind</kbd> function over the three entries of the list to make a table with 300 rows, which we'll finally join to our <kbd>fam</kbd> object above.  Save this table as file using a similar naming scheme you used for the map file.
 
 ```
 write.table(cbind(fam,Reduce(rbind,list(data.frame(cbind(dt.gt1.allele.chb,dt.gt2.allele.chb))[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)],data.frame(cbind(dt.gt1.allele.yri,dt.gt2.allele.yri))[,rep(1:ncol(dt.gt1.allele.yri),each = 2) + (0:1) * ncol(dt.gt1.allele.yri)],data.frame(cbind(dt.gt1.allele.ceu,dt.gt2.allele.ceu))[,rep(1:ncol(dt.gt1.allele.ceu),each = 2) + (0:1) * ncol(dt.gt1.allele.ceu)]))),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.simulation.chr1.ped") # save .ped file
@@ -192,4 +195,26 @@ genofile <- SNPRelate::snpgdsOpen("path/to/file/CHB+YRI+CEU.simulation.chr1.gds"
 With this gds object, run PCA as in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) to make sure your sampled individuals cluster into three distinct genotype groups.  Make plots of the first three PCs.
 
 ### Kinship analysis ###
+
+The kinship analysis program [KING](https://academic.oup.com/bioinformatics/article/26/22/2867/228512?login=false) is used to estimate whether any individuals are related to each other.  Cryptic relatedness can bias the results of association studies, so we should correct for it.  KING works by comparing the alleles of each SNP for a pair of individuals.  Before we get into computing the genetic relationship coefficient, we first need to reduce our SNP set to a list of approximately independent alleles.  This first step is known as *LD-pruning*.
+
+#### LD-pruning ####
+
+The <kbd>SNPRelate</kbd> package computes the correlation coefficient (Eq. (1)) for each pair of SNPs and removes SNPs which are correlated by more than a certain threshold.  To get a subset of quasi-independent SNPs, run
+
+```
+snpset <- snpgdsLDpruning(genofile,method = "corr", slide.max.bp = 10e6,ld.threshold = sqrt(0.1), verbose = FALSE) # remove correlated SNPs
+pruned <- unlist(snpset, use.names=FALSE) # get the pruned list
+```
+
+This function computes the correlation coefficient \\(r_{i,j}\\) between each pair of SNPs and removes those with \\(r < \sqrt{0.1}\\) or LD \\(r^2 < 0.1\\) with an index SNPs.  The computation is restricted to SNPs in ten-million-bp windows.  To see that your SNPs are indepdents, make and plot a matrix of the \\(r^2\\) values for each pair of SNPs using
+
+```
+LD.mat <- snpgdsLDMat(genofile, snp.id = pruned, slide = 0,method = "corr") # creates LD matrix of r values
+fields::image.plot(1:nrow(LD.mat$LD),1:ncol(LD.mat$LD),LD.mat$LD ^ 2,main = "LD r2",xlab = "SNPs",ylab = "SNPs") # plots r^2 values
+```
+
+Be sure to square each entry of <kbd>LD.mat</kbd> to get \\(r^2\\) instead of \\(r\\).  How many SNPs are left in your pruned set?
+
+#### KING ####
 
