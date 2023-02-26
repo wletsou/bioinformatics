@@ -31,15 +31,15 @@ colnames(indivs) <- c("id","pop")
 
 ### Simulating haplotypes from a phased vcf file ###
 
-For the association study we'll be doing next week, we'll need genotypes of unrelated individuals with and without the disease phenotype of interest.  To protect subjects' privacy, real sequencing data are not readily accessible without data-sharing agreements.  Instead, we'll have to simulate haplotypes from the 1KG vcf files.  The simulation program <kbd>sim1000G</kbd> works by drawing \\(m\\)-SNP haplotypes from an \\(m\\)-dimensional multivariate normal distirbution such that the *allele frquency* of each variant and *linkage disequilibrium* between each pair of variants is preserved.  <kbd>sim1000G</kbd> uses the observed correlation between variants to know what should be the pairwise correlation between any two SNPs in the simulated data.  In order for the correlation to be measured, the input data need to be *phased*, so that we know not only each subject's genotypes, but also which allele appears on which of the subject's two chromosomes.  For example, a line of a phased vcf file might look like
+For the association study we'll be doing next week, we'll need genotypes of unrelated individuals with and without the disease phenotype of interest.  To protect subjects' privacy, real sequencing data are not readily accessible.  Instead, we'll have to simulate haplotypes from the 1KG vcf files.  The simulation program <kbd>sim1000G</kbd> works by drawing \\(m\\)-SNP haplotypes from an \\(m\\)-dimensional multivariate normal distirbution such that the *allele frquency* of each variant and *linkage disequilibrium* between each pair of variants is preserved.  <kbd>sim1000G</kbd> uses the observed correlation between variants to know what should be the pairwise correlation between any two SNPs in the simulated data.  In order for the correlation to be measured, the input data need to be *phased*, so that we know not only each subject's genotypes, but also which allele appears on which of the subject's two chromosomes.  For example, a line of a phased vcf file might look like
 
 ```
 1	14930	rs75454623	A	G	100	PASS	AC=284;AF=0.482228;AN=620;NS=2504;DP=42231;EAS_AF=0.4137;AMR_AF=0.5231;AFR_AF=0.4811;EUR_AF=0.5209;SAS_AF=0.4857;AA=a|||;VT=SNP	GT	1|0	1|0	1|0	1|0	0|1	1|1	0|1	0|1	1|1	1|0	0|1
 ```
 
-with 0 indicating the *reference allele* and 1 the *alternative allele*.  The vertical bars indicate the data have been computationally phased, so that alleles on the left side of the bar all reside on one chromosome and the alleles on the right on the other.  The correlation between alleles \\(i\\) and \\(j\\) is then measured by \\[r_{ij} = \frac{p_{i,j}-p_ip_j}{\sqrt{p_i\left(1-p_i\right)p_j\left(1-p_j\right)}},\tag{1}\\] where \\(p_i\\) is the sample allele frequency.  The measured correlation matrix is then used to generate haplotypes from an \\(m\\)-dimensional multivariate normal distirbution.
+with 0 indicating the *reference allele* and 1 the *alternative allele*.  The vertical bars indicate the data have been computationally phased, so that alleles on the left side of the bar all reside on one chromosome and the alleles on the right on the other.  The correlation between alleles \\(i\\) and \\(j\\) is then measured by \\[r_{ij} = \frac{p_{i,j}-p_ip_j}{\sqrt{p_i\left(1-p_i\right)p_j\left(1-p_j\right)}},\tag{1}\\] where \\(p_i\\) is the sample allele frequency and \\(p_{i,j}\\) is the frequency with which two appear together on the same chromosome.  The measured correlation matrix is then used to generate haplotypes from an \\(m\\)-dimensional multivariate normal distirbution.
 
-#### Reading in vcf file ####
+#### Reading in a vcf file ####
 
 To use <kbd>sim1000G</kbd> we first need to read in a vcf file.  vcf files can be very large (hundreds of MB to GB), so we should ony read a small portion in.  <kbd>sim1000G</kbd> lets us choose the number of variants we'd like to simulate and the minimum and maximum allele frequency.  Download one of the 1KG files for one of the chromomsomes [here](https://wletsou.github.io/bioinformatics/files) and read it into R using the <kbd>readVCF</kbd> function:
 
@@ -82,4 +82,114 @@ write.table(df.variants,col.names = FALSE,row.names = FALSE,quote = FALSE,file =
 
 #### Simulating individuals ####
 
+Now we're going to simulate 100 individuals from each of the three populations.  We need to do the simulation step separately for each population and then combine the genotypes in a single PLINK ped file.  A ped file has the following format:
+
+```
+1 1 0 0 1 1 C C A C G G G G A A A A T T C C G G G G C C T T G G G T C C C C T T C C C C G G G G A G G G G G C C G G C C A A G G G A G G C C T T A G C C A G A A
+```
+
+where the first six fields are numbers and the seventh through last fields are alleles.  The numeric fields should be
+
+1. Family id
+2. Individual id
+3. Paternal id
+4. Maternal id
+5. Sex
+6. Phenotype
+
+Since we're simulating unrelated individuals, fields 3 and 4 can both be blank (i.e., the individual has no parents in the dataset), and fields 1 and 2 can be identical (i.e., each individual belongs to its own family).  Sex is coded as 1 for male and 2 for female, and phenotype is code as 1 for unaffected and 2 for affected.  So the recod above for individual 1 corresponds to an unaffected male.  The 4000 alleles for each of the 2000 SNPs come afterward in pairs.  There is no explicit phase information in ped files, but we can assume that the odd-numbered alleles are paternal and the evens maternal.
+
+The challenge will be to get our simulated data into ped format.
+
+To being our simulation, run
+
+```
+N <- 100 # simulate 100 individuals
+SIM$reset()
+startSimulation(vcf,totalNumberOfIndividuals = N,subset = indivs[indivs$pop == "CEU",]$id) # only take the CEU individuals from the vcf
+ids <- generateUnrelatedIndividuals(N) # run the simulation
+```
+
+You have now created a <kbd>SIM</kbd> object with fields <kbd>$gt1</kbd> and <kbd>$gt2</kbd> containing 100-by-2000 matrices containing, respectively, the maternal and paternal alleles of the one hundred simulated individuals, coded as 0 for REF and 1 for ALT.  To turn these matrices into a ped file, we (1) have to interleave the two matrices and (2) replace the 0's and 1's with A, T, G, and C.
+
+First let's convert our matrices into data tables to make them easier to work with:
+
+```
+dt.gt1 <- data.table(SIM$gt1) # first chromosomes alleles
+dt.gt2 <- data.table(SIM$gt2) # second chromosome alleles
+```
+
+Now, remember those <kbd>ref</kbd> and <kbd>alt</kbd> variables we created earlier?  We'll use them them to write a function that can be applied to each column of the data table:
+
+```
+dt.gt1.allele.ceu <- dt.gt1[,mapply(function(X,Y,Z) ifelse(X == 0,Y,Z),.SD,ref,alt),.SDcols = 1:ncol(dt.gt1),by = .I] # convert 0/1 to ATCG
+dt.gt2.allele.ceu <- dt.gt2[,mapply(function(X,Y,Z) ifelse(X == 0,Y,Z),.SD,ref,alt),.SDcols = 1:ncol(dt.gt2),by = .I] # convert 0/1 to ATCG
+```
+
+This function converts the i<sup>th</sup> column from a number (0 or 1) to the i<sup>th</sup> entry of <kbd>ref</kbd> or <kbd>alt</kbd> depending on its value.  The arguments <kbd>.SDcols</kbd> and <kbd>by = .I</kbd> tell <kbd>data.table</kbd> to apply the function rowwise at each column individually.
+
+Before we interleave the columns of these tables to make a ped file, **repeat the above procedure for the YRI and CHB populations** and generate appropriately named data tables.
+
+#### Generating a gds file from your ped and map files ####
+
+Once you have the six data tables <kbd>dt.gt1.allele.ceu</kbd> to <kbd>dt.gt2.allele.chb</kbd>, which should each look something like
+
+```
+    V1 V2 V3 V4 V5 V6 V7 V8 V9 V10
+ 1:  G  A  T  T  C  A  T  C  T   T
+ 2:  G  G  T  T  C  A  T  C  T   T
+ 3:  G  G  T  T  G  G  T  C  T   T
+ 4:  G  G  T  T  G  G  T  C  T   T
+ 5:  G  G  T  T  C  A  T  C  T   T
+ 6:  G  G  T  T  C  G  T  C  T   T
+ 7:  G  G  T  T  C  A  C  C  T   T
+ 8:  G  G  T  T  G  G  T  C  T   T
+ 9:  G  G  T  T  C  G  T  C  T   T
+10:  G  G  T  T  G  G  T  C  T   T
+```
+
+we're ready to make a ped file and convert it into a gds object suitable for <kbd>SNPRelate</kbd> and <kbd>GENESIS</kbd>.  First let's create the six numeric columns of the file for our 300 individuals.  All we need is to number individuals/families from 1 to 300 (<kbd>=nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)</kbd>) and ensure they have no parents in the data.  We'll randomly select the subject's sex and for now assume that each individual is unaffected.
+
+```
+fam <- data.frame(fid = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)),id = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)), mother = 0,father = 0,sex = sample(c(0,1),nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu),replace = TRUE),phenotype = 1) # numeric columns of ped file
+```
+
+which should look something like
+
+```
+head(fam)
+  fid id mother father sex phenotype
+1   1  1      0      0   1         1
+2   2  2      0      0   0         1
+3   3  3      0      0   1         1
+4   4  4      0      0   1         1
+5   5  5      0      0   0         1
+6   6  6      0      0   1         1
+```
+
+Now, to interleave the columns of our <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.allele</kbd> tables for each population, we need to first glue the tables together side-by-side and take, in pairs, columns 1 and 2001, 2 and 2002, 3 and 2003, etc.  We can do this by repeating each number in 1 to 2000 twice (i.e., 1 1 2 2 3 3 ...) and then adding 2000 to every other value:
+
+```
+cbind(dt.gt1.allele.chb,dt.gt2.allele.chb))[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)]
+```
+
+Then we'll group these tables (one for each population) in an R <kbd>list</kbd> and <kbd>Reduce</kbd> the <kbd>rbind</kbd> function over the three entries in the list to make a table with 300 rows, which we'll finally join to our <kbd>fam</kbd> object above.  Save this table as file using a similar naming scheme you used for the map file.
+
+```
+write.table(cbind(fam,Reduce(rbind,list(data.frame(cbind(dt.gt1.allele.chb,dt.gt2.allele.chb))[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)],data.frame(cbind(dt.gt1.allele.yri,dt.gt2.allele.yri))[,rep(1:ncol(dt.gt1.allele.yri),each = 2) + (0:1) * ncol(dt.gt1.allele.yri)],data.frame(cbind(dt.gt1.allele.ceu,dt.gt2.allele.ceu))[,rep(1:ncol(dt.gt1.allele.ceu),each = 2) + (0:1) * ncol(dt.gt1.allele.ceu)]))),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.simulation.chr1.ped") # save .ped file
+```
+
+Finally, let's convert the map and ped files to gds format an create a gds object.  Use the <kbd>snpgdsSummary</kbd> function to verify that you have the right number of samples and variants.
+
+```
+snpgdsPED2GDS("path/to/file/CHB+YRI+CEU.simulation.chr1.ped","path/to/file/CHB+YRI+CEU.simulation.chr1.map","path/to/file/CHB+YRI+CEU.simulation.chr1.gds")
+snpgdsSummary("path/to/file/CHB+YRI+CEU.simulation.chr1.gds")
+genofile <- SNPRelate::snpgdsOpen("path/to/file/CHB+YRI+CEU.simulation.chr1.gds")
+```
+
+### Principal components analysis ###
+
+With this gds object, run PCA as in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) to make sure your sampled individuals cluster into three distinct genotype groups.  Make plots of the first three PCs.
+
+### Kinship analysis ###
 
