@@ -3,7 +3,7 @@ layout: "single"
 title: "Principal components analysis of the 1KGP populations"
 toc: true
 toc_label: "Contents"
-permalink: /assignments/pca/
+permalink: /assignments/week1/
 ---
 
 ### Importing the data
