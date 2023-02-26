@@ -39,7 +39,7 @@ For the association study we'll be doing next week, we'll need genotypes of unre
 
 with 0 indicating the *reference allele* and 1 the *alternative allele*.  The vertical bars indicate the data have been computationally phased, so that alleles on the left side of the bar all reside on one chromosome and the alleles on the right on the other.  The correlation between alleles \\(i\\) and \\(j\\) is then measured by \\[r_{ij} = \frac{p_{i,j}-p_ip_j}{\sqrt{p_i\left(1-p_i\right)p_j\left(1-p_j\right)}},\tag{1}\\] where \\(p_i\\) is the sample allele frequency.  The measured correlation matrix is then used to generate haplotypes from an \\(m\\)-dimensional multivariate normal distirbution.
 
-#### Running sim1000G ####
+#### Reading in vcf file ####
 
 To use <kbd>sim1000G</kbd> we first need to read in a vcf file.  vcf files can be very large (hundreds of MB to GB), so we should ony read a small portion in.  <kbd>sim1000G</kbd> lets us choose the number of variants we'd like to simulate and the minimum and maximum allele frequency.  Download one of the 1KG files for one of the chromomsomes [here](https://wletsou.github.io/bioinformatics/files) and read it into R using the <kbd>readVCF</kbd> function:
 
@@ -48,3 +48,38 @@ vcf <- readVCF("path/to/file/CHB+YRI+CEU.chr1.vcf.gz", maxNumberOfVariants = 200
 ```
 
 This step may take a few minutes to complete depending on the size of the file, so be patient.
+
+#### Making a table of variants ####
+
+Before we generate haplotypes from this vcf file, we'll need to make PLINK *.map* and *.ped* files to be converted into gds objects.  A .map file is simply a manifest of the SNPs, their locations, and their alleles.  We'll make this one first.  You can access the sampled variants in the <kbd>$varid</kbd> field of your <kbd>vcf</kbd> objects.  We're going to split up these lines into "chr", "pos", "rsid", "ref",and "alt", and then <kbd>rbind</kbd> the rows together.  Do
+
+```
+variants <- data.frame(Reduce(rbind,lapply(vcf$varid,function(X) unlist(strsplit(X,split = " "))))) # variant info, chr, pos, rsid, ref, alt
+rownames(variants) <- 1:nrow(variants)
+colnames(variants) <- c("chr","pos","rsid","ref","alt") # rename the columns
+```
+
+Check that the first few lines agree with the first few entries in <kbd>vcf$varid</kbd>.  Your new table of variants should have exactly 2000 records, one for each SNP we sampled from the vcf file.  For later use, save the reference and alternate alleles in a variable:
+
+```
+ref <- variants[,4]
+alt <- variants[,5]
+```
+
+Now we'll convert this table to map format.  Per the [PLINK file format reference page](https://www.cog-genomics.org/plink/1.9/formats#map), your table should contain
+
+1. Chromosome code. PLINK 1.9 also permits contig names here, but most older programs do not.
+2. Variant identifier
+3. Position in morgans or centimorgans (optional; also safe to use dummy value of '0')
+4. Base-pair coordinate
+
+We can achieve this format from our <kbd>variants</kbd> object using
+
+```
+df.variants <- data.frame(chr = variants$chr,rsid = variants$rsid,X = rep(0,nrow(variants)),pos = variants$pos) # four columns of the PLINK map file
+write.table(df.variants,col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.chr1.simulation.map") # save the file with a name you'll use throughout
+```
+
+#### Simulating individuals ####
+
+
