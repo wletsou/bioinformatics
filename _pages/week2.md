@@ -1,5 +1,5 @@
 ---
-type: "single"
+layout: "single"
 title: "Simulating genotypes and kinship analysis"
 toc: true
 toc_label: "Contents"
