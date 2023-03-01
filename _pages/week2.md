@@ -230,4 +230,24 @@ From (3a)&ndash;(3c), the fraction of the genome shared IBD is\\[r=\frac{2\pi_2+
 
 KING computes both the probability \\(\pi_0\\) that two relatives share 0 alleles IBD and the coefficient of relatedness \\(\phi=\frac{r}{2}\\)), being the probability that two alleles taken one from each relative are IBD at a locus (the maximum probability is \\(\frac{1}{2}\\) because there is a 50% chance that the alleles chosen come from different parents).  The idea is to count the number of times \\(N\\) two individuals are heterozygous \\(Aa,Aa\\) or opposite homozygous \\(AA,aa\\) at the same locus to come up with an estimator\\[\hat{\phi_{ij}}=\frac{N_{Aa,Aa}-2N_{AA,aa}}{N_{Aa}^{\left(i\right)}+N_{Aa}^{\left(j\right)}}\tag{5}\\] relative to the total number of alleles at which each individual is heterozygous \\(Aa\\).  From (5) it can be seen that sharing heterozygous sites increases the estimated relatedness and unshared homozygous sites decreases relatedness.  The estimated \\(\phi_{ij}\\) can even be negative if individuals are drawn from different genetic backgrounds, giving us an alternative to PCA.
 
+To run KING we only need a gds object and a set of SNPs.  We will use the LD-pruned set <kbd>pruned</kbd> we computed above and the <kbd>genofile</kbd> containing simulated haplotypes from CHB, YRI, and CEU individuals.  Running
+
+```
+ibd <- snpgdsIBDKING(genofile,snp.id = pruned) # run KING
+```
+
+will gives us an object <kbd>ibd</kbd> that contains two matrics <kbd>$IBS0</kbd> and <kbd>$kinship</kbd> that contain the probability of sharing zero alleles identical by state (IBS, not IBD) and the estimated kinship coefficient.  Make a plot of <kbd>IBS0</kbd> vs. <kbd>kinship</kbd> to see if subjects who share few alleles IBS are unrelated:
+
+```
+plot(ibd$IBS0,ibd$kinship,xlab = "Kinship coeffecient",ylab = "IBS0",main = "KING relatedness estimation")
+```
+
+You should see that most values are negative, indicating that individuals come from different populations.  Recalling that individuals 1 to 100 are CHB, 101 to 200 are YRI, and 201 to 300 are CEU, make plots for the populations separately to see if you get fewer negative values.
+
+We are done using the <kbd>genofile</kbd> object, so close it now:
+
+```
+closefn.gds(genofile)
+```
+
 
