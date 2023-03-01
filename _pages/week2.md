@@ -218,9 +218,9 @@ Be sure to square each entry of <kbd>LD.mat</kbd> to get \\(r^2\\) instead of \\
 
 #### Kinship: theory ####
 
-Kinship can be defined as the expected fraction of alleles that two individuals got from the same ancestor(s).  We say that two individuals share an allele of a SNP *identically by descent* or *IBD* if they inherited the same copy of the allele from a common ancestor.  IBD-sharing is different from simply carrying the same allele of a gene (known as *identical by state* or *IBS*-sharing), which unrelated individuals may do if the allele is common enough in the population.  The *degree* \\(R\\) of relationship may be defined as the effective number of meioses separating the relatives through the equation \\[\frac{1}{2^R}=\frac{1}{2^{R_1}}+\frac{1}{2^{R_2}},\tag{1}\\]where \\(R_i\\) is the number of meioses separating the relatives through the first relative's \\(i\\)<sup>th</sup> parent.  For example, sibs are connected by two meioses through two parents, while a parent and child are connected by one meiosis through one path: both relationships are degree-1.  
+Kinship can be defined as the expected fraction of alleles that two individuals got from the same ancestor(s).  We say that two individuals share an allele of a SNP *identical by descent* or *IBD* if they inherited the same copy of the allele from a common ancestor.  IBD-sharing is different from simply carrying the same allele of a gene (known as *identical by state* or *IBS*-sharing), which unrelated individuals may do if the allele is common enough in the population.  The *degree* \\(R\\) of relationship may be defined as the effective number of meioses separating the relatives through the equation \\[\frac{1}{2^R}=\frac{1}{2^{R_1}}+\frac{1}{2^{R_2}},\tag{1}\\]where \\(R_i\\) is the number of meioses separating the relatives through the first relative's \\(i\\)<sup>th</sup> parent.  For example, sibs are connected by two meioses through two parents, while a parent and child are connected by one meiosis through one parent: both relationships are degree-1.  
 
-The probability that two relatives share an allele IBD is \\(\frac{1}{2^R}\\), as there is a \\(\frac{1}{2}\\) chance that an allele is passed on in any meiosis and \\(R\\) is the effective number of meioses or steps between them.  If \\(2\times\frac{1}{2^R}\\) is the expected number of alleles shared IBD at any given locus, then the fraction of the genome shared by any two relatives is\\[r=\frac{2\times\\frac{1}{2^R}}{2}=\frac{1}{2^R}.\tag{2}\\]
+The probability that two relatives share an allele IBD is \\(\frac{1}{2^R}\\), as there is a \\(\frac{1}{2}\\) chance that an allele is passed on in any meiosis, and \\(R\\) is the effective number of meioses or steps between them.  If \\(2\times\frac{1}{2^R}\\) is the expected number of alleles shared IBD at any given locus, then the fraction of the genome shared by any two relatives is\\[r=\frac{2\times\\frac{1}{2^R}}{2}=\frac{1}{2^R}.\tag{2}\\]
 
 However, genomic sharing can be realized in different ways depending on the probabilities \\(\pi_0\\), \\(\pi_1\\), and \\(\pi_2\\) that individuals share zero, one, or two copies IBD at a locus.  The probability that the relatives inherit both both copies IBD\\[\pi_2=P\left(\text{share 2 IBD}\right)=2^2\frac{1}{2^{R_1}2^{R_2}}\tag{3a}\\] is simply the product of the probabilities of sharing through both parents. The probability of sharing exactly one allele IBD\\[\pi_1=P\left(\text{share 1 IBD}\right)=2\left(\frac{1}{2^{R_1}}+\frac{1}{2^{R_2}}\right)-2^3\frac{1}{2^{R_1}2^{R_2}}\tag{3b}\\] is the got by finding the probability \\(2\left(\frac{1}{2^{R_1}}+\frac{1}{2^{R_2}}\right)-2^2\frac{1}{2^{R_1}2^{R_2}}\\) of sharing at least one allele IBD less the probability \\(\pi_2\\) of sharing two.  Finally, the probability of sharing at zero alleles IBD\\[\pi_0=P\left(\text{share 0 IBD}\right)=1-2\frac{1}{2^{R_1}}-2\frac{1}{2^{R_2}}+2^2\frac{1}{2^{R_1}2^{R_2}}\tag{3c}\\]is got by subtracting the probability \\(\pi_1+\pi_2\\) of sharing at least one allele IBD from 1.  The coefficients account for the fact that there are \\(2\\) alleles at each locus and \\(2^2\\) that can be shared.
 
@@ -228,15 +228,15 @@ From (3a)&ndash;(3c), the fraction of the genome shared IBD is\\[r=\frac{2\pi_2+
 
 #### KING ####
 
-KING computes both the probability \\(\pi_0\\) that two relatives share 0 alleles IBD and the coefficient of relatedness \\(\phi=\frac{r}{2}\\)), being the probability that two alleles taken one from each relative are IBD at a locus (the maximum probability is \\(\frac{1}{2}\\) because there is a 50% chance that the alleles chosen come from different parents).  The idea is to count the number of times \\(N\\) two individuals are heterozygous \\(Aa,Aa\\) or opposite homozygous \\(AA,aa\\) at the same locus to come up with an estimator\\[\hat{\phi_{ij}}=\frac{N_{Aa,Aa}-2N_{AA,aa}}{N_{Aa}^{\left(i\right)}+N_{Aa}^{\left(j\right)}}\tag{5}\\] relative to the total number of alleles at which each individual is heterozygous \\(Aa\\).  From (5) it can be seen that sharing heterozygous sites increases the estimated relatedness and unshared homozygous sites decreases relatedness.  The estimated \\(\phi_{ij}\\) can even be negative if individuals are drawn from different genetic backgrounds, giving us an alternative to PCA.
+KING computes both the probability \\(\pi_0\\) that two relatives share 0 alleles IBD as well as the coefficient of relatedness \\(\phi=\frac{r}{2}\\), defined as the probability that two alleles taken one from each relative are IBD at a locus (the maximum probability is \\(\frac{1}{2}\\) because there is a 50% chance that the alleles chosen come from different parents).  The idea is to count the number \\(N\\) of times two individuals are heterozygous \\(Aa,Aa\\) or opposite homozygous \\(AA,aa\\) at the same locus to come up with an estimator\\[\hat{\phi_{ij}}=\frac{N_{Aa,Aa}-2N_{AA,aa}}{N_{Aa}^{\left(i\right)}+N_{Aa}^{\left(j\right)}}\tag{5}\\] of relatedness relative to the total number of alleles at which each individual is heterozygous \\(Aa\\).  From (5) it can be seen that shared heterozygous sites increase the estimated relatedness and unshared homozygous sites decreases relatedness.  The estimated \\(\phi_{ij}\\) can even be negative if individuals are drawn from different genetic backgrounds, giving us an alternative to PCA.
 
-To run KING we only need a gds object and a set of SNPs.  We will use the LD-pruned set <kbd>pruned</kbd> we computed above and the <kbd>genofile</kbd> containing simulated haplotypes from CHB, YRI, and CEU individuals.  Running
+To run KING we need only a gds object and a set of SNPs.  We will use the LD-pruned set <kbd>pruned</kbd> we computed above and the <kbd>genofile</kbd> containing simulated haplotypes from CHB, YRI, and CEU individuals.  Running
 
 ```
 ibd <- snpgdsIBDKING(genofile,snp.id = pruned) # run KING
 ```
 
-will gives us an object <kbd>ibd</kbd> that contains two matrics <kbd>$IBS0</kbd> and <kbd>$kinship</kbd> that contain the probability of sharing zero alleles identical by state (IBS, not IBD) and the estimated kinship coefficient.  Make a plot of <kbd>IBS0</kbd> vs. <kbd>kinship</kbd> to see if subjects who share few alleles IBS are unrelated:
+will gives us an object <kbd>ibd</kbd> that contains two matrics <kbd>$IBS0</kbd> and <kbd>$kinship</kbd> that contain the probabilities of sharing zero alleles identical by state (IBS, not IBD) and the estimated kinship coefficients.  Make a plot of <kbd>IBS0</kbd> vs. <kbd>kinship</kbd> to see if subjects who share few alleles IBS are unrelated:
 
 ```
 plot(ibd$IBS0,ibd$kinship,xlab = "Kinship coeffecient",ylab = "IBS0",main = "KING relatedness estimation")
@@ -261,7 +261,7 @@ geno <- GdsGenotypeReader("path/to/file/CHB+YRI+CEU.simulation.chr1.gds")
 genoData <- GenotypeData(geno)
 ```
 
-Now we'll run PC-Air to identify and compiute PCs of a subset of unrelated individuals who represent each ancestry group.  We need the initial results of our KING analysis above as well as the list of LD-pruned SNPs.  The using the <kbd>genoData</kbd> object, run
+Now we'll run PC-AiR to identify and compute PCs of a subset of unrelated individuals who represent each ancestry group.  We need the initial results of our KING analysis above as well as the list of LD-pruned SNPs.  The using the <kbd>genoData</kbd> object, run
 
 ```
 mypcair <- pcair(genoData,kinobj = ibd$kinship,divobj = ibd$kinship,snp.include = pruned) # genotype principal components based on a subset of unrelated individuals
@@ -273,7 +273,7 @@ The important part of the output is the field <kbd>$vectors</kbd> containing new
 genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
 ```
 
-Now we'll use PC-Relate to update the kinship coefficients for the entire sample based on the fact that the GRM is biased when genotypes are standardized to allele frequencies measures among related individuals.  To get a corrected GRM, we supply PC-Relate with the PC results from PC-Air and the list of unrelated individuals for training the model:
+Now we'll use PC-Relate to update the kinship coefficients for the entire sample based on the fact that the GRM is biased when genotypes are standardized to allele frequencies measured among related individuals.  To get a corrected GRM, we supply PC-Relate with the PC results from PC-AiR and the list of unrelated individuals for training the model:
 
 ```
 mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:10],training.set = mypcair$unrels) # kinship based on unrelated individuals
