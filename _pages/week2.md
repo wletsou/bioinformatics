@@ -280,7 +280,7 @@ mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:10],training.set 
 myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genotype relatedness matrix 
 ```
 
-The <kbd>mypcrel</kbd> object contains fields <kbd>$kinBtwn$k0$</kbd> and <kbd>$kinBtwn$kin</kbd> for the recomputed IBS0 proportions and kinshipo coefficients.  Make a new plot using
+The <kbd>mypcrel</kbd> object contains fields <kbd>$kinBtwn\$k0</kbd> and <kbd>$kinBtwn\$kin</kbd> for the recomputed IBS0 proportions and kinshipo coefficients.  Make a new plot using
 
 ```
 plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBS0 proportion",ylab = "Kinship coefficient",main = "PC-relate relatedness estimation") # kinship vs. IBD0
@@ -288,7 +288,7 @@ plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBS0 proportion",ylab = "Kin
 
 You should see a cleaner plot with data points spread out along a line.  Also plot subsets of the data frame <kbd>$kinBtwn</kbd> for values of <kbd>ID1</kbd> and <kbd>ID2</kbd> restricted to each of the three populations as we did above.  Do you still see negative kinship coefficients?
 
-Your new GRM <kbd>myGRM<kbd> contains estimates of the genetic relatedness between study subjects which we will use next week for association testing.  Since we are done for now, close your genoData object:
+Your new GRM <kbd>myGRM</kbd> contains estimates of the genetic relatedness between study subjects which we will use next week for association testing.  Since we are done for now, close your genoData object:
   
 ```
 close(genoData)
