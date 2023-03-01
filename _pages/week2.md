@@ -250,4 +250,40 @@ We are done using the <kbd>genofile</kbd> object, so close it now:
 closefn.gds(genofile)
 ```
 
+#### PC-AiR and PC-Relate ####
 
+Your kinship plots probably look very messy.  This is okay since we are using simulated data at only a few markers.  To improve our estimates, we will use two related packages: <kbd>pcair</kbd> and <kbd>pcrelate</kbd>.  These packages improve our estimates of kinship by first running PCA on a subset of ancestry-representative individuals (PC-Air) and then using the principal components to separate sharing due to common ancestry from sharing due to kinship (PC-Relate).
+
+To use these programs we also need the package <kbd>GWASTools</kbd> which creates an object that can be used for association testing in [Week 3](https://wletsou.github.io/bioinformatics/assignments/week3).  First we read in our gds file and create a <kbd>GenotypeData</kbd> object:
+
+```
+geno <- GdsGenotypeReader("path/to/file/CHB+YRI+CEU.simulation.chr1.gds")
+genoData <- GenotypeData(geno)
+```
+
+Now we'll run PC-Air to identify and compiute PCs of a subset of unrelated individuals who represent each ancestry group.  We need the initial results of our KING analysis above as well as the list of LD-pruned SNPs.  The using the <kbd>genoData</kbd> object, run
+
+```
+mypcair <- pcair(genoData,kinobj = ibd$kinship,divobj = ibd$kinship,snp.include = pruned) # genotype principal components based on a subset of unrelated individuals
+```
+
+The important part of the output is the field <kbd>$vectors</kbd> containing new PCs for this unrelated subset of individuals.  Next we will create a <kbd>GenotypeBlockIterator</kbd> needed for PC-Relate.  This object is important for running genome-wide analyses in parallel for millions of SNPs; we only have about 1000 SNPs, so parallelization is unnecessary.
+
+```
+genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
+```
+
+Now we'll use PC-Relate to update the kinship coefficients for the entire sample based on the fact that the GRM is biased when genotypes are standardized to allele frequencies measures among related individuals.  To get a corrected GRM, we supply PC-Relate with the PC results from PC-Air and the list of unrelated individuals for training the model:
+
+```
+mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:10],training.set = mypcair$unrels) # kinship based on unrelated individuals
+myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genotype relatedness matrix 
+```
+
+The <kbd>mypcrel</kbd> object contains fields <kbd>$kinBtwn$k0$</kbd> and <kbd>$kinBtwn$kin</kbd> for the recomputed IBS0 proportions and kinshipo coefficients.  Make a new plot using
+
+```
+plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBS0 proportion",ylab = "Kinship coefficient",main = "PC-relate relatedness estimation") # kinship vs. IBD0
+```
+
+You should see a cleaner plot with data points spread out along a line.  Your new GRM <kbd>myGRM<kbd> contains estimates of the genetic relatedness between study subjects which we will use next week for association testing.  
