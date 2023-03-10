@@ -6,7 +6,7 @@ toc_label: "Contents"
 permalink: /assignments/week3/
 ---
 
-In this assignemnt we will combine the data-cleaning steps we learned in [Week 1](https://wletsou.github.io/assignments/week1) and [Week 2](https://wletsou.github.io/assignments/week2) to a simulated case-control study of disease.  We will create a simulated dataset from one of the 1KG populations, declare some alleles to be risk alleles, and find the association of each SNP with the simulated phenotype.  First we will give an overview of logistic regression and linear mixed models.
+In this assignemnt we will combine the data-cleaning steps we learned in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) and [Week 2](https://wletsou.github.io/bioinformatics/assignments/week2) to a simulated case-control study of disease.  We will create a simulated dataset from one of the 1KG populations, declare some alleles to be risk alleles, and find the association of each SNP with the simulated phenotype.  First we will give an overview of logistic regression and linear mixed models.
 
 ### Statistics ###
 
@@ -30,15 +30,89 @@ Now, the variance of the log-odds \\(Y\\) about its mean \\(\mathbf{X}\beta\\) b
 
 ### Simulating genotypes and phenotypes ###
 
-Today we will be simulating a case-control study using the package <kbd>sim1000G</kbd> and the logistic model.  We will need the following packages
+Today we will be simulating a case-control study using the package <kbd>sim1000G</kbd> and the logistic model.  Then we will perform a "genome-wide" association study to discover the SNPs that affect disease risk.  We will need the following packages
 
-<pre>
-<code>
+```
 library(sim1000G)
 library(SNPRelate)
 library(GENESIS)
 library(GWASTools)
 library(SeqVarTools)
 library(data.table)
-</code>
-</pre>
+```
+
+#### Importing data and simulating genotypes ####
+
+First get the file of individuals and their population codes:
+
+```
+indivs <- read.table("path/to/file/CHB+YRI+CEU.txt",header = FALSE)
+colnames(indivs) <- c("id","pop")
+```
+
+Then import the 1KG vcf file for one of the chromosomes using the sim1000G function <kbd>readVCF</kbd>.  Take 100 variants with minor allele frequencies between 0.10 and 0.90 to simulate genotypes comprising commmon variants across the chromosome. 
+
+```
+vcf <- readVCF("OneDrive - New York Institute of Technology/Courses/BIOL 350 Spring 2023/CHB+YRI+CEU.chr1.vcf.gz", maxNumberOfVariants = 100 , min_maf = 0.10 , max_maf = 0.90)
+```
+
+Make a table of variants as we did [previously](https://wletsou.github.io/bioinformatics/assignments/week2/#making-a-table-of-variants); call it <kbd>variants</kbd>.  We will use this table to make a map file.
+
+Next simulate 2000 individuals from one of the three populations, also as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#simulating-individuals).  It is important that we use a large number of subjects so that we have enough statistical power to detect ORs near 1.  At the end of this step you should have two data tables <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.allele</kbd> of alleles on each of the two chromosomes of 2000 subjects.  We will use these tables to make a ped file.
+
+You should also have two 2000-by-100 data tables <kbd>dt.gt1</kbd> and <kbd>dt.gt2</kbd> of 0's and 1's, corresponding to the number of copies of the alternative allele on each chromosome.  Turn these into a matrix from which we can compute allele frequencies:
+
+```
+genotype.matrix <- as.matrix((dt.gt1 + dt.gt2)[,1:ncol(dt.gt1),,with = FALSE])
+colnames(genotype.matrix) <- 1:ncol(genotype.matrix)
+rownames(genotype.matrix) <- 1:nrow(genotype.matrix)
+```
+
+You can compute the frequency of each minor allele by applying the <kbd>sum</kbd> function to the columns of <kbd>genotype.matrix</kbd> and dividing by *twice* the number of rows.
+
+```
+apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix)) # minor allele frequencies
+```
+
+These values are called the *minor allele frequencies (MAF)* and will be used to simulate phenotypes.
+#### Simulating phenotypes ####
+
+We will simulate a binary phenotype by picking three alleles at random to increase the risk of disease.  We will weight the log-OR \\(\beta\\) by allele frequency according to the formula \\[\beta=\log{\left(10\right)}\times-\log_{10}{\left(\text{MAF}\right)}.\tag{7}\\]Eq. (7) says that the odds of disease increases by a factor of 10 for alleles which occur on only 10% of chromosomes.  This is a much stronger effect than most SNPs show, but implementing it will increase the power of our small study.  Choose and view the effect sizes using:
+
+```
+disease.snps <- sample(1:nrow(variants),3,replace = FALSE) # randomly select disease SNPs
+beta <- log(10/1) * -log10(apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # weight log-OR by allele frequency
+rbind(beta,freq = apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # view frequency and beta values
+```
+
+According to Eq. (2), the number of copies of each allele will increase the log-odds of disease for each subject by \\(X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3\\).  Carry out this matrix product by
+
+```
+logits <- genotype.matrix[,disease.snps] %*% (beta) # genotype matrix multiplied by column of beta values
+```
+
+The baseline probability of disease in our study will be 50%, because there will be an approximately equal number of cases and controls, corresponding to a mean log-odds of \\(\log{\left(\frac{0.5}{0.5}\right)}=0\\).  In order that the mean log-odds should be zero, simply subtract the mean of <kbd>logits</kbd> from <kbd>logits</kbd> itself:
+
+```
+logits <- logits + (0 - mean(logits)) # log-odds in a balanced case-control study
+```
+
+Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{\beta_0+X_i1\beta_1+X_i2\beta_2+X_i3\beta_3}}{1+e^{\beta_0+X_i1\beta_1+X_i2\beta_2+X_i3\beta_3}}.\tag{3}\\]In R, we can do
+
+```
+probs <- exp(logits) / (1 + exp(logits)) # disease probability
+```
+
+Now we can simulate the binary phenotype by drawing a random number between 0 and 1.  If the number is less than <kbd>probs[i]<\kbd> for subject <kbd>i<\kbd>, then subject <kbd>i<\kbd> is a case; otherwise it is a control.  Simulate the phenotypes by
+  
+```
+pheno <- as.numeric(runif(nrow(probs)) <= probs) # generate disease phenotypes
+```
+  
+Verify that the mean of <kbd>pheno</kbd> is close to 0.5.
+  
+#### Saving your genotype and phenotypes ####
+  
+
+  
+  
