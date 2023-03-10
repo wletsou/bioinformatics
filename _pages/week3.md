@@ -29,3 +29,16 @@ In genome-wide association studies (GWAS) we'd like to estimate the odds ratio \
 Now, the variance of the log-odds \\(Y\\) about its mean \\(\mathbf{X}\beta\\) becomes\\[\begin{align}\left(Y-\mathbf{X}\beta\right)\left(Y-\mathbf{X}\beta\right)^T&=\mathbf{Z}uu^T\mathbf{Z}^T+\varepsilon\varepsilon^T\\\\\\ &=\left(\mathbf{Z}\mathbf{Z}^T+\mathbf{I}\right)\sigma^2=\mathbf{V}.\end{align}\\]Rearranging and differntiating with respect to \\\(\beta_k\\) obtains (with summation over \\(i\\), \\(j\\), and \\(l\\))\\[\begin{align}V_{li}^{-1}X_{ik}\left(Y_l-X_{lj}\beta_j\right)^T+V_{il}^{-1}\left(Y_l-X_{lj}\beta_j\right)X^T_{ki}&=0\\\\\\ \left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)^T+\left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)&=0,\end{align}\\]since \\(\mathbf{V}\\) and hence \\(\mathbf{V}^{-1}\\) is a symmetric matrix.  And because the \\(k\\)<sup>th</sup> entry of a transposed vector is equal to the \\(k\\)<sup>th</sup> entry of the original vector, we get the maximum-likelihood solution\\[\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}\mathbf{X}\hat{\beta}=\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}Y,\tag{6}\\]where \\(\frac{1}{m}\mathbf{Z}\mathbf{Z}^T\\) is the genomic relationship matrix (GRM) we used to compute principle components in [Week 1](https://wletsou.github.io/assignments/week1).  Thus we can estimatimate the *fixed effects* \\(\beta\\)&mdash;including the SNP effect \\(\beta_1\\)&mdash;and their standard errors without fitting the *random effects* of every other SNP simultaneously.
 
 ### Simulating genotypes and phenotypes ###
+
+Today we will be simulating a case-control study using the package <kbd>sim1000G</kbd> and the logistic model.  We will need the following packages
+
+<pre>
+<code>
+library(sim1000G)
+library(SNPRelate)
+library(GENESIS)
+library(GWASTools)
+library(SeqVarTools)
+library(data.table)
+</code>
+</pre>
