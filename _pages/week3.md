@@ -24,7 +24,7 @@ The binomial distribution is a good approximation to the normal distribution, so
 
 #### Linear mixed models ####
 
-In genome-wide association studies (GWAS) we'd like to estimate the odds ratio \\(e^\beta_1}\\) for each SNP to see if any SNPs are associated with disease.  However, there are millions of SNPs and only thousands of subjects, so we cannot fit all the parameters simultaneously.  Instead, one SNP effect \\(\beta_1\\) is fit at a time together with other the covariate effects \\(\beta_j\\) against a background of the composite effect of all the remaining SNPs together, so that our model has two components:\\[Y_i=\log{\frac{p_i}{1-p_i}}=\sum_jX_{ij}\beta_j+\sum_jZ_{ij}u_j+\varepsilon_i.\tag{5}\\]Here, \\(\mathbf{Z}\\) is an \\(n\times m\\) matrix of the (standardized) genotypes of \\(n\\) individuals at \\(m\\) SNPs and \\(u_j\\) is the effect of SNP \\(j\\) on the log-odds for individual \\(i\\).  The mixed-model framework assumes the \\(u\\) come from a normal distribution with mean 0 and standard deviation \\(\sigma\\), so that each variant has but a small effect on disease risk.  
+In genome-wide association studies (GWAS) we'd like to estimate the odds ratio \\(e^{\beta_1}\\) for each SNP to see if any SNPs are associated with disease.  However, there are millions of SNPs and only thousands of subjects, so we cannot fit all the parameters simultaneously.  Instead, one SNP effect \\(\beta_1\\) is fit at a time together with other the covariate effects \\(\beta_j\\) against a background of the composite effect of all the remaining SNPs together, so that our model has two components:\\[Y_i=\log{\frac{p_i}{1-p_i}}=\sum_jX_{ij}\beta_j+\sum_jZ_{ij}u_j+\varepsilon_i.\tag{5}\\]Here, \\(\mathbf{Z}\\) is an \\(n\times m\\) matrix of the (standardized) genotypes of \\(n\\) individuals at \\(m\\) SNPs and \\(u_j\\) is the effect of SNP \\(j\\) on the log-odds for individual \\(i\\).  The mixed-model framework assumes the \\(u\\) come from a normal distribution with mean 0 and standard deviation \\(\sigma\\), so that each variant has but a small effect on disease risk.  
 
 Now, the variance of the log-odds \\(Y\\) about its mean \\(\mathbf{X}\beta\\) becomes\\[\begin{align}\left(Y-\mathbf{X}\beta\right)\left(Y-\mathbf{X}\beta\right)^T&=\mathbf{Z}uu^T\mathbf{Z}^T+\varepsilon\varepsilon^T\\\\\\ &=\left(\mathbf{Z}\mathbf{Z}^T+\mathbf{I}\right)\sigma^2=\mathbf{V}.\end{align}\\]Rearranging and differntiating with respect to \\\(\beta_k\\) obtains (with summation over \\(i\\), \\(j\\), and \\(l\\))\\[\begin{align}V_{li}^{-1}X_{ik}\left(Y_l-X_{lj}\beta_j\right)^T+V_{il}^{-1}\left(Y_l-X_{lj}\beta_j\right)X^T_{ki}&=0\\\\\\ \left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)^T+\left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)&=0,\end{align}\\]since \\(\mathbf{V}\\) and hence \\(\mathbf{V}^{-1}\\) is a symmetric matrix.  And because the \\(k\\)<sup>th</sup> entry of a transposed vector is equal to the \\(k\\)<sup>th</sup> entry of the original vector, we get the maximum-likelihood solution\\[\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}\mathbf{X}\hat{\beta}=\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}Y,\tag{6}\\]where \\(\frac{1}{m}\mathbf{Z}\mathbf{Z}^T\\) is the genomic relationship matrix (GRM) we used to compute principle components in [Week 1](https://wletsou.github.io/assignments/week1).  Thus we can estimatimate the *fixed effects* \\(\beta\\)&mdash;including the SNP effect \\(\beta_1\\)&mdash;and their standard errors without fitting the *random effects* of every other SNP simultaneously.
 
@@ -103,7 +103,7 @@ Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{
 probs <- exp(logits) / (1 + exp(logits)) # disease probability
 ```
 
-Now we can simulate the binary phenotype by drawing a random number between 0 and 1.  If the number is less than <kbd>probs[i]<\kbd> for subject <kbd>i<\kbd>, then subject <kbd>i<\kbd> is a case; otherwise it is a control.  Simulate the phenotypes by
+Now we can simulate the binary phenotype by drawing a random number between 0 and 1.  If the number is less than <kbd>probs[i]</kbd> for subject <kbd>i</kbd>, then subject <kbd>i</kbd> is a case; otherwise it is a control.  Simulate the phenotypes by
   
 ```
 pheno <- as.numeric(runif(nrow(probs)) <= probs) # generate disease phenotypes
@@ -113,6 +113,29 @@ Verify that the mean of <kbd>pheno</kbd> is close to 0.5.
   
 #### Saving your genotype and phenotypes ####
   
+[Last time](https://wletsou.github.io/bioinformatics/assignments/week2/#generating-a-gds-file-from-your-ped-and-map-files) we generated map and ped files from our data.  The map file can be simply got from your <kbd>variants</kbd> table using
 
-  
+```
+write.table(data.frame(chr = variants$chr,rsid = variants$rsid,X = 0,pos = variants$pos),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/GWAS.simulation.map") # variant map file
+```
+
+To make a ped file with phenotype information, we first need to make a six-column data frame to prepend the genotypes:
+
+```
+fam <- data.frame(fid = row.names(genotype.matrix),id = row.names(genotype.matrix), mother = 0,father = 0,sex = sample(c(0,1),nrow(genotype.matrix),replace = TRUE),phenotype = pheno) # variant map file
+```
+
+This <kbd>fam</kbd> object is the pedigree of a cohort of unrelated individuals having an approximately equal distributions of cases and controls and men and women.  Now, prepend these six columns to the vector of each subject's alleles on each of its two chromosomes:
+
+```
+write.table(cbind(fam,data.frame(cbind(dt.gt1.allele,dt.gt2.allele))[,rep(1:ncol(dt.gt1.allele.ceu),each = 2) + (0:1) * ncol(dt.gt1.allele.ceu)]),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "OneDrive - New York Institute of Technology/Courses/BIOL 350 Spring 2023/CEU.simulation.ped") # genotype .ped file
+```
+
+This will be our ped file.  Verify that the object you created has 2000 rows and 206 columns (what do these numbers represent?).
+
+### Association testing ###
+
+In the next part of the analysis, our goal is to use the <kbd>GENESIS</kbd> package to estimate the log-OR associate with each SNP in our dataset.  According to Eq. (6), we need the GRM to do this properly.  GENESIS requires that the GRM be in a specific form, which we will achieve by following the protocol for PC-AiR and PC-Relate.  First of all, we need principal components from the implementation of KING in SNPRelate.
+
+#### Principal components analysis and LD pruning ####
   
