@@ -233,3 +233,60 @@ With this GRM, we're ready to do the association test.
 
 #### Association testing ####
 
+This analysis should now be new.  We're first going to fit a *null* model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+\sum_jZ_{ij}u_j\tag{9}\\]with ten PCs as fixed effects and all SNPs as random effects and compare it to a model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+X_{ik}\beta_k+\sum_jZ_{ij}u_j\tag{10}\\]with a single SNP effect.  We will estimate \\(\hat{\beta_k}\\) for each SNP \\(k\\) and estimate its statistical significance.
+
+Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.  GENESIS requires us to data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.  Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
+
+```
+mydat <- data.frame(scanID = mypcair$sample.id,pc1 = mypcair$vectors[,1],pc2 = mypcair$vectors[,2],pc3 = mypcair$vectors[,3],pc4 = mypcair$vectors[,4],pc5 = mypcair$vectors[,5],pc6 = mypcair$vectors[,6],pc7 = mypcair$vectors[,7],pc8 = mypcair$vectors[,8],pc9 = mypcair$vectors[,9],pc10 = mypcair$vectors[,10],pheno = pheno) # data frame of fixed effects
+```
+
+The conver it to a <kbd>ScanAnnotationDataFrame</kbd>, run
+
+```
+scanAnnot <- ScanAnnotationDataFrame(mydat)
+```
+
+We can use this object in the GENESIS function <kbd>fitNullModel</kbd>, which fits model (9).  We will have to specify the regression <kbd>outcome</kbd> and a vector <kbd>covars</kbd> of covariates, both consisting of text labels of the fields of <kbd>mydat</kbd> as they appear in <kbd>scanAnnot</kbd>.  We also need to specify the covariance matrix GRM for including the random effects, and, since we're doing logistic regression, and indication that our likelihood function is of the binomial family:
+
+```
+nullmod <- fitNullModel(scanAnnot, outcome = "pheno", covars = c("pc1","pc2","pc3","pc4","pc5","pc6","pc7","pc8","pc9","pc10"), cov.mat = myGRM, family = "binomial")
+```
+
+Now, to fit model (10) for each SNP, we'll use our <kbd>GenotypeBlockIterator</kbd> object to see if any SNPs significantly increase the likelihood.  If adding a SNP to the model causes the log-likelihood function (4) to get significantly bigger, we accept it in the model.  Run
+
+```
+assoc <- assocTestSingle(genoData.iterator,null.model = nullmod)
+```
+
+to get a table of the tested variants along with the <kbd>Score.pval</kbd> for each one.  Make a *Manhattan plot* by plottong \\(-\log_{10}{p}\\) vs. SNP position:
+
+```
+plot(assoc$pos,-log10(assoc$Score.pval))
+abline(h = 8 * log10(5),col = 'red',lty = 2)
+```
+
+Are any SNPs above the genome-wide significance level \\(p=5.0\times10^{-8}\\).  Extract the SNPs <kbd>disease.snps</kbd> from <kbd>assoc</kbd> using
+
+```
+assoc[assoc$variant.id %in% disease.snps,]
+```
+
+and see if the OR estimates agree with the values <kbd>exp(beta)</kbd> you previously assigned.
+
+Finally, we're going to make a QQ (quantile-quantile) plot to see if the observed association p-values depart from expectation.  If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest greater than or equal to \\(i\\)% of the other p-values; these are the expected quantiles.  The observed quantiles are the observed p-values in sorted order, representing the probability that a score statistic is greater or equal to \\(100p\\)% of other score statistics.  Instead of plotting on the nominal scale, we negative-log10 transform each value.  Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.  We can generate such a plot by doing
+
+```
+qqplot(sort(-log10((1:length(assoc$Score.pval))/length(assoc$Score.pval))),sort(-log10(assoc$Score.pval)),xlab = "Expected −log10(p)",ylab = "Observed −log10(p)",pch = 19)
+qqline(sort(-log10(assoc$Score.pval)),probs = c(0.25,0.75),col = 'red') # line through (-log10(empirical Q1),-log10(p-value of empirical Q1)) and (-log10(empirical Q3),-log10(p-value of empirical Q3))
+```
+
+Each point represents an association test for one of the SNPs.  Do any significantly depart from the line of identity?
+
+When you're done with this analysis, close your genotypeData object:
+
+```
+close(genoData)
+```
+
+### Your report ###
