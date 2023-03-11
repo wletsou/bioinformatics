@@ -235,13 +235,13 @@ With this GRM, we're ready to do the association test.
 
 This analysis should now be new.  We're first going to fit a *null* model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+\sum_jZ_{ij}u_j\tag{9}\\]with ten PCs as fixed effects and all SNPs as random effects and compare it to a model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+X_{ik}\beta_k+\sum_jZ_{ij}u_j\tag{10}\\]with a single SNP effect.  We will estimate \\(\hat{\beta_k}\\) for each SNP \\(k\\) and estimate its statistical significance.
 
-Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.  GENESIS requires us to data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.  Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
+Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.  GENESIS requires us to convert a data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.  Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
 
 ```
 mydat <- data.frame(scanID = mypcair$sample.id,pc1 = mypcair$vectors[,1],pc2 = mypcair$vectors[,2],pc3 = mypcair$vectors[,3],pc4 = mypcair$vectors[,4],pc5 = mypcair$vectors[,5],pc6 = mypcair$vectors[,6],pc7 = mypcair$vectors[,7],pc8 = mypcair$vectors[,8],pc9 = mypcair$vectors[,9],pc10 = mypcair$vectors[,10],pheno = pheno) # data frame of fixed effects
 ```
 
-The conver it to a <kbd>ScanAnnotationDataFrame</kbd>, run
+Then convert it to a <kbd>ScanAnnotationDataFrame</kbd>, run
 
 ```
 scanAnnot <- ScanAnnotationDataFrame(mydat)
@@ -262,8 +262,8 @@ assoc <- assocTestSingle(genoData.iterator,null.model = nullmod)
 to get a table of the tested variants along with the <kbd>Score.pval</kbd> for each one.  Make a *Manhattan plot* by plottong \\(-\log_{10}{p}\\) vs. SNP position:
 
 ```
-plot(assoc$pos,-log10(assoc$Score.pval))
-abline(h = 8 * log10(5),col = 'red',lty = 2)
+plot(assoc$pos,-log10(assoc$Score.pval),xlab = "Position",ylab = "-log10(p)")
+abline(h = -8 * log10(5),col = 'red',lty = 2)
 ```
 
 Are any SNPs above the genome-wide significance level \\(p=5.0\times10^{-8}\\).  Extract the SNPs <kbd>disease.snps</kbd> from <kbd>assoc</kbd> using
