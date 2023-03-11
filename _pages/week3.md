@@ -247,7 +247,7 @@ Then convert it to a <kbd>ScanAnnotationDataFrame</kbd>, run
 scanAnnot <- ScanAnnotationDataFrame(mydat)
 ```
 
-We can use this object in the GENESIS function <kbd>fitNullModel</kbd>, which fits model (9).  We will have to specify the regression <kbd>outcome</kbd> and a vector <kbd>covars</kbd> of covariates, both consisting of text labels of the fields of <kbd>mydat</kbd> as they appear in <kbd>scanAnnot</kbd>.  We also need to specify the covariance matrix GRM for including the random effects, and, since we're doing logistic regression, and indication that our likelihood function is of the binomial family:
+We can use this object in the GENESIS function <kbd>fitNullModel</kbd>, which fits model (9).  We will have to specify the regression <kbd>outcome</kbd> and a vector <kbd>covars</kbd> of covariates, both consisting of text labels of the fields of <kbd>mydat</kbd> as they appear in <kbd>scanAnnot</kbd>.  We also need to specify the covariance matrix GRM for including the random effects, and, since we're doing logistic regression, an indication that our likelihood function is of the binomial family:
 
 ```
 nullmod <- fitNullModel(scanAnnot, outcome = "pheno", covars = c("pc1","pc2","pc3","pc4","pc5","pc6","pc7","pc8","pc9","pc10"), cov.mat = myGRM, family = "binomial")
@@ -274,7 +274,7 @@ assoc[assoc$variant.id %in% disease.snps,]
 
 and see if the OR estimates agree with the values <kbd>exp(beta)</kbd> you previously assigned.
 
-Finally, we're going to make a QQ (quantile-quantile) plot to see if the observed association p-values depart from expectation.  If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest greater than or equal to \\(i\\)% of the other p-values; these are the expected quantiles.  The observed quantiles are the observed p-values in sorted order, representing the probability that a score statistic is greater or equal to \\(100p\\)% of other score statistics.  Instead of plotting on the nominal scale, we negative-log10 transform each value.  Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.  We can generate such a plot by doing
+Finally, we're going to make a QQ (quantile-quantile) plot to see if the observed association p-values depart from expectation.  If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest greater than or equal to \\(i\\)% of the other p-values; these are the expected quantiles.  The observed quantiles are the observed p-values in sorted order, representing the probability that a score statistic is greater or equal to \\(100p\\)% of other score statistics.  Instead of plotting on the nominal scale, we negative-log10 transform each value.  Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.  We can generate such a plot by
 
 ```
 qqplot(sort(-log10((1:length(assoc$Score.pval))/length(assoc$Score.pval))),sort(-log10(assoc$Score.pval)),xlab = "Expected −log10(p)",ylab = "Observed −log10(p)",pch = 19)
