@@ -97,7 +97,7 @@ The baseline probability of disease in our study will be 50%, because there will
 logits <- logits + (0 - mean(logits)) # log-odds in a balanced case-control study
 ```
 
-Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{\beta_0+X_i1\beta_1+X_i2\beta_2+X_i3\beta_3}}{1+e^{\beta_0+X_i1\beta_1+X_i2\beta_2+X_i3\beta_3}}.\tag{3}\\]In R, we can do
+Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{\beta_0+X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3}}{1+e^{\beta_0+X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3}}.\tag{3}\\]In R, we can do
 
 ```
 probs <- exp(logits) / (1 + exp(logits)) # disease probability
@@ -137,5 +137,99 @@ This will be our ped file.  Verify that the object you created has 2000 rows and
 
 In the next part of the analysis, our goal is to use the <kbd>GENESIS</kbd> package to estimate the log-OR associate with each SNP in our dataset.  According to Eq. (6), we need the GRM to do this properly.  GENESIS requires that the GRM be in a specific form, which we will achieve by following the protocol for PC-AiR and PC-Relate.  First of all, we need principal components from the implementation of KING in SNPRelate.
 
-#### Principal components analysis and LD pruning ####
-  
+#### PCA, LD pruning, and KING in SNPRelate ####
+
+If you successfully created map and ped files, you can convert them to a gds object using the SNPRelate package:
+
+```
+snpgdsPED2GDS("path/to/file/GWAS.simulation.ped","path/to/file/GWAS.simulation.map","path/to/file/GWAS.simulation.gds")
+snpgdsSummary("path/to/file/GWAS.simulation.gds")
+genofile <- SNPRelate::snpgdsOpen("path/to/file/GWAS.simulation.gds")
+```
+
+As in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1), generate KING PCA estimates by
+
+```
+pca <- snpgdsPCA(genofile) # principal components analysis
+```
+
+Like we did before, make a plot of the first few PCs.  We're only using a single population now; how is your PCA plot different from when we used three?
+
+Next perform [LD-pruning](https://wletsou.github.io/bioinformatics/assignments/week2/#ld-pruning) to get a set of unlinked SNPs:
+
+```
+snpset <- snpgdsLDpruning(genofile,method="corr", slide.max.bp=10e6,ld.threshold=sqrt(0.1), verbose=FALSE)
+pruned <- unlist(snpset, use.names=FALSE)
+```
+
+There is a possibility your disease SNPs will removed by this analysis, but only if they can be represented by a proxy SNP.  Make and plot the LD matrix for your data using
+
+```
+LD.mat <- snpgdsLDMat(genofile, snp.id=pruned, slide = 0,method = "corr")
+fields::image.plot(1:nrow(LD.mat$LD),1:ncol(LD.mat$LD),LD.mat$LD ^ 2,main = "LD r2",xlab = "SNPs",ylab = "SNPs")
+```
+
+Finally, we will use our pruned set of SNPs to get kinship estimates for our subjects:
+
+```
+ibd <- snpgdsIBDKING(genofile,snp.id = pruned)
+```
+
+Make a plot of the kinship coefficient vs. the IBS0 proportion as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#king).  Now we can close our gds object before moving on to PC-AiR and PC-Relate.
+
+```
+closefn.gds(genofile)
+```
+
+If you have trouble, try
+
+```
+showfile.gds(closeall=TRUE)
+```
+
+#### PC-AiR, PC-Relate, and the revised GRM ####
+
+We will follow the [same steps](https://wletsou.github.io/bioinformatics/assignments/week2/#pc-air-and-pc-relate) as last week to get a revised GRM for association analysis.  First use <kbd>GWASTools</kbd> to get GenotypeData object from uour gds file, as required by PC-AiR:
+
+```
+geno <- GdsGenotypeReader("path/to/file/GWAS.simulation.gds")
+genoData <- GenotypeData(geno)
+```
+
+Now run <kbd>pcair</kbd> to get genotype principal components based on an unrelated, ancestry-representative subset of subjects.  You will need the output of the KING kinship analysis first.
+
+```
+mypcair <- pcair(genoData,kinobj = ibd$kinship,divobj = ibd$kinship,snp.include = pruned) # genotype principal components based on a subset of unrelated individuals
+```
+
+See how the PC estimates have changed for the first few PCs using
+
+```
+plot(pcair,vx = 1 vy = 2) # plot of PC2 vs PC1
+```
+
+Now we'll create a GenotypeBlockIterator object, as required by PC-Relate
+
+```
+genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
+```
+
+Recall that PC-relate updates the kinship coefficients by adjusting out shared genetic ancestry and looking only for sharing between close relatives.  We can get and plot our new estimates using
+
+```
+mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:10],training.set = mypcair$unrels) # kinship based on unrelated individuals
+plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBS0 proportion",ylab = "Kinship coefficient",main = "PC-relate relatedness estimation") # kinship vs. IBD0
+```
+
+and update the GRM using
+
+```
+myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genotype relatedness matrix  
+```
+
+Print out a ten-by-ten sample of the GRM to see if your results make sense.
+
+With this GRM, we're ready to do the association test.
+
+#### Association testing ####
+
