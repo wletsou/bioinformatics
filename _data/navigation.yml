@@ -12,17 +12,17 @@ main:
     url: https://wletsou.github.io/bioinformatics/resources/
     
     
-sidebar:
-  title: "Navigation"
-  nav: "assignmnets-sidebar"
+# sidebar:
+#   title: "Navigation"
+#   nav: "assignmnets-sidebar"
   
-assignments-sidebar:
-  -title: "Assignments"
-   children:
-    -title: "Week 1"
-     url: https://wletsou.github.io/bioinformatics/assignments/week1
-    -title: "Week 2"
-     url: https://wletsou.github.io/bioinformatics/assignments/week2
-    -title: "Week 3"
-     url: https://wletsou.github.io/bioinformatics/assignments/week3
+# assignments-sidebar:
+#   -title: "Assignments"
+#    children:
+#     -title: "Week 1"
+#      url: https://wletsou.github.io/bioinformatics/assignments/week1
+#     -title: "Week 2"
+#      url: https://wletsou.github.io/bioinformatics/assignments/week2
+#     -title: "Week 3"
+#      url: https://wletsou.github.io/bioinformatics/assignments/week3
    
