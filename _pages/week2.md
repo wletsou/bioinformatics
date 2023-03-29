@@ -15,7 +15,7 @@ library(GENESIS)
 library(GWASTools)
 ```
 
-We'll also want the packages <kbd>data.table</kbd> and <kbd>fields</kbd> from CRAN.  <kbd>data.table</kbd> is a more flexible structure than <kbd>data.frame</kbd> and <kbd>fields</kbd> is for plotting images.
+We'll also want the packages <kbd>data.table</kbd> and <kbd>fields</kbd> from CRAN.  <kbd>data.table</kbd> is a more flexible structure than <kbd>data.frame</kbd>, and <kbd>fields</kbd> is for plotting images.
 
 ```
 install.packages("data.table") # your first installation
