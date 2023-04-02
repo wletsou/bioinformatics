@@ -3,6 +3,8 @@ layout: "single"
 title: "Genotype simulation and kinship analysis"
 toc: true
 toc_label: "Contents"
+sidebar:
+  nav: "side"
 permalink: /assignments/week2/
 ---
 
