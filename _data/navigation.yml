@@ -16,7 +16,7 @@ main:
 #   title: "Navigation"
 #   nav: "assignmnets-sidebar"
   
-docs:
+side:
   - title: "Assignments"
     children:
     - title: "Week 1"
@@ -25,6 +25,6 @@ docs:
       url: https://wletsou.github.io/bioinformatics/assignments/week2
     - title: "Week 3"
       url: https://wletsou.github.io/bioinformatics/assignments/week3
-   - title: "Files"
-     url: https://wletsou.github.io/bioinformatics/files
+#    - title: "Files"
+#      url: https://wletsou.github.io/bioinformatics/files
    
