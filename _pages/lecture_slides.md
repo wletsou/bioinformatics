@@ -4,4 +4,4 @@ title: "Lecture slides"
 permalink: /lecture_slides/
 ---
 
-[Slides](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/Lecture%2Bslides.pdf)
+[Slides](https://github.com/wletsou/bioinformatics/blob/master/docs/Biol%20350%20slides.pdf)
