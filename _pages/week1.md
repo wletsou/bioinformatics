@@ -3,6 +3,8 @@ layout: "single"
 title: "Principal components analysis of the 1KGP populations"
 toc: true
 toc_label: "Contents"
+sidebar:
+  nav: "docs"
 permalink: /assignments/week1/
 ---
 
