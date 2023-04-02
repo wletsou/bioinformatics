@@ -18,6 +18,7 @@ main:
   
 side:
   - title: "Assignments"
+    url: https://wletsou.github.io/bioinformatics/assignments
     children:
     - title: "Week 1"
       url: https://wletsou.github.io/bioinformatics/assignments/week1
@@ -26,7 +27,6 @@ side:
     - title: "Week 3"
       url: https://wletsou.github.io/bioinformatics/assignments/week3
   - title: "Files"
-    children:
-    - title: "Files"
-      url: https://wletsou.github.io/bioinformatics/files
+    url: https://wletsou.github.io/bioinformatics/files
+      
    
