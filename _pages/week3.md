@@ -3,6 +3,8 @@ layout: "single"
 title: "Genome-wide association testing"
 toc: true
 toc_label: "Contents"
+sidebar:
+  nav: "side"
 permalink: /assignments/week3/
 ---
 
