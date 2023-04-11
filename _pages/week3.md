@@ -8,31 +8,31 @@ sidebar:
 permalink: /assignments/week3/
 ---
 
-In this assignemnt we will combine the data-cleaning steps we learned in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) and [Week 2](https://wletsou.github.io/bioinformatics/assignments/week2) to a simulated case-control study of disease.  We will create a simulated dataset from one of the 1KG populations, declare some alleles to be risk alleles, and find the association of each SNP with the simulated phenotype.  First we will give an overview of logistic regression and linear mixed models.
+In this assignemnt we will combine the data-cleaning techniques we learned in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) and [Week 2](https://wletsou.github.io/bioinformatics/assignments/week2) to a simulated case-control study of disease.&nbsp; We will create a simulated dataset from one of the 1KG populations, declare some alleles to be risk alleles, and find the association of each SNP with the simulated phenotype.&nbsp; First we will give an overview of logistic regression and linear mixed models.
 
 ### Statistics ###
 
 #### The odds ratio ####
 
-The logic of any genetic association study is to see if an allele is enriched in subjects affected with disease.  In other words, we want to see if the allele is *associated* with disease.  We do this by collecting may individuals with disease and a similar number of healthy controls from the general popuation.  An individual's risk is the probability \\(p=P\left(\text{Disease}\mid\text{Allele}\right)\\) of developing disease over a lifetime, and the *relative risk* or RR is the ratio of the risk to carriers to the risk to non-carriers of the allele.  However, the RR is difficult to measure because it involves waiting a long time for a potentially smaller number of cases to develop.  If we pre-select cases and controls, we can instead calculate the probability \\(P\left(\text{Allele}\mid\text{Disease}\right)\\) of carrying the allele conditioned on an individual's disease status.  Related to probability is the *odds* \\(\frac{p}{1-p}\\) of the the event, and it turns out that the *odds ratio*\\[\text{OR}=\frac{\frac{P\left(\text{Allele}\mid\text{Cases}\right)}{1-P\left(\text{Allele}\mid\text{Cases}\right)}}{\frac{P\left(\text{Allele}\mid\text{Controls}\right)}{1-P\left(\text{Allele}\mid\text{Controls}\right)}}\tag{1}\\]is invariant to whether we collect subjects prospectively or retrospectively.  Hence we use the OR as a convenient measure the effect of an allele on disease risk in case-control studies. However, the crude measure (1) cannot be adjusted for other factors like sex, age, and race which may also have an effect on disease risk.  For this type of analysis, we need logistic regression.
+The logic of any genetic association study is to see if an allele is enriched in subjects affected with disease.&nbsp; In other words, we want to see if the allele is *associated* with disease.&nbsp; We do this by collecting may individuals with disease and a similar number of healthy controls from the general popuation.&nbsp; An individual's risk is its probability \\(P\left(\text{Disease}\mid\text{Allele}\right)\\) of developing disease over its lifetime, and the *relative risk* or RR is the ratio of the risk to carriers to the risk to non-carriers of the allele.&nbsp; However, the RR is difficult to measure prosepctively because it involves waiting a long time for a potentially smaller number of cases to develop.&nbsp; If we retrospectively select cases that have already developed and match them with healthy controls, we can instead calculate an individual's probability \\(P\left(\text{Allele}\mid\text{Disease}\right)\\) of carrying the allele conditioned on its disease status.&nbsp; Related to probability \\(p\\) of an event is the *odds* \\(\frac{p}{1-p}\\) of the the event, and it turns out that the *odds ratio*\\[\text{OR}=\frac{\frac{P\left(\text{Allele}\mid\text{Cases}\right)}{1-P\left(\text{Allele}\mid\text{Cases}\right)}}{\frac{P\left(\text{Allele}\mid\text{Controls}\right)}{1-P\left(\text{Allele}\mid\text{Controls}\right)}}\tag{1}\\]is invariant to whether we collect subjects prospectively or retrospectively.&nbsp; Hence we use the OR as a convenient measure of the effect of an allele on disease risk in case-control studies.&nbsp; However, the crude measure (1) cannot be adjusted for other factors like sex, age, and genetic ancestry which may also have an effect on disease risk.&nbsp; For this type of analysis, we need logistic regression.
 
 #### The logistic model of disease risk ####
 
-Normally we test the association between two variables using regression analysis, but doing so requires that both the dependent and independent variables be continuous.  In genetic association studies, neither the outcome (disease) nor the predictor (number of risk alleles) is continuous.  However, an individual's unobserved probability \\(p\\) is a continuous variable that ranges between 0 and 1; furthermore, the individual's *log-odds* \\(\log{\frac{p}{1-p}}\\) of disease is a continuous value that ranges between \\(-\infty\\) and \\(+\infty\\).  Thus if we assume that the log-odds of disease can be represented by the equation \\[\log{\frac{p}{1-p}}=\beta_0+\beta_1X_1,\tag{2}\\] where \\(X_1\\) is number of risk alleles and \\(\beta_1\\) is the *log-odds-ratio*, then we can in principle fit a line and estimate its slope.  This slope \\(\beta_1\\) would then be interpretted as the multiplicative increase in the log-odds of disease.
+Normally we test the association between two variables using linear regression, but doing so requires that both the dependent and independent variables be continuous.&nbsp; In genetic association studies, neither the outcome (disease) nor the predictor (number of risk alleles) is continuous.&nbsp; However, an individual's unobserved propensity \\(p\\) is a continuous variable that ranges between 0 and 1; furthermore, the individual's *log-odds* \\(\log{\frac{p}{1-p}}\\) of disease is a continuous value that ranges between \\(-\infty\\) and \\(+\infty\\).&nbsp; Thus if we assume that the log-odds of disease can be represented by the equation \\[\log{\frac{p}{1-p}}=\beta_0+\beta_1X_1,\tag{2}\\] where \\(X_1\\) is number of risk alleles and \\(\beta_1\\) is the *log-odds-ratio*, then we can in principle fit a line and estimate its slope.&nbsp; This slope \\(\beta_1\\) would then be interpretted as the multiplicative increase in the log-odds of disease.
 
-Now, since we cannot observe \\(p_i\\) for each subject \\(i\\), we cannot actually fit (2) using linear regression.  We can, however, use the concept of *maximum likelihood*.  In statistics, the likelihood of a disease model like (2) is the probability of the data being generated the model, or\\[\mathcal{L}\left(\text{Model}\mid\text{Data}\right)=P\left(\text{Data}\mid\text{Model}\right).\tag{3}\\]Here the model is the set of parameters \\(\beta_0,\beta_1\\) required to predict disease risk, and we can find estimates for the parameters by maximizing (3), i.e., by finding the model most consistent with the data.  Furthermore, if the likelihood function has approximately the shape of a normal distribution, then we can estimate the statistical significance of our estimates by computing their standard error, got from the *curvature* or second derivative of \\(\mathcal{L}\\) near the \\(\beta\\) which maximize it.
+Now, since we cannot observe \\(p_i\\) for each subject \\(i\\), we cannot actually fit (2) using linear regression.&nbsp;  We can, however, use the concept of *maximum likelihood*.&nbsp; In statistics, the likelihood of a disease model like (2) is the probability of the data being generated by the model, or\\[\mathcal{L}\left(\text{Model}\mid\text{Data}\right)=P\left(\text{Data}\mid\text{Model}\right).\tag{3}\\]Here the model is the set of parameters \\(\beta_0,\beta_1\\) required to predict disease risk, and we can find estimates for the parameters by maximizing (3), i.e., by finding the model most consistent with the data.&nbsp; Furthermore, if the likelihood function has approximately the shape of a normal distribution, then we can estimate the statistical significance of our estimates by computing their standard error, got from the *curvature* or second derivative of \\(\mathcal{L}\\) near the \\(\beta\\) which maximize it.
 
-The binomial distribution is a good approximation to the normal distribution, so if we model the likelihood of the observed data as\\[\mathcal{L}=\prod_ip_i^{y_i}\left(1-p_i\right)^{1-y_i},\\] where \\(y_i=0,1\\) is an indicator of disease status, then the *log-likelihood* is\\[\begin{align}\ell&=\sum_iy_i\log{p_i}+\left(1-y_i\right)\log{\left(1-p_i\right)}\\\\\\ &=\sum_iy_i\log{\frac{p_i}{1-p_i}}+\log{\left(1-p_i\right)}\end{align}\\]or using (2)\\[\ell=\sum_iy_i\left(\beta_0+\beta_1X_{i1}\right)-\log{\left(1+e^{\beta_0+\beta_1X_{i1}}\right)}.\tag{4}\\]Eq. (4) is a function of the parameter \\(\beta_1\\).  Thus we can find the *maximum-likelihood estimate* \\(\hat{\beta_1}\\) of \\(\beta_1\\) by solving \\(\frac{\partial \ell}{\partial \beta_1}=0\\) and get its standard error \\(\frac{-1}{\frac{\partial^2\ell}{\partial \beta_1^2}\bigr\rvert_{\beta_1=\hat{\beta_1}}}\\)by evaluating the curvature of the log-likelihood at the best estimate of \\(\beta_1\\).  From these we can also get an estimate of the statistical significance.
+The binomial distribution is a good approximation to the normal distribution, so if we model the likelihood of the observed data as\\[\mathcal{L}=\prod_ip_i^{y_i}\left(1-p_i\right)^{1-y_i},\\] where \\(y_i=0,1\\) is an indicator of disease status, then the *log-likelihood* is\\[\begin{align}\ell&=\sum_iy_i\log{p_i}+\left(1-y_i\right)\log{\left(1-p_i\right)}\\\\\\ &=\sum_iy_i\log{\frac{p_i}{1-p_i}}+\log{\left(1-p_i\right)}\end{align}\\]or using (2)\\[\ell=\sum_iy_i\left(\beta_0+\beta_1X_{i1}\right)-\log{\left(1+e^{\beta_0+\beta_1X_{i1}}\right)}.\tag{4}\\]Eq. (4) is a function of the parameter \\(\beta_1\\).&nbsp; Thus we can find the *maximum-likelihood estimate* \\(\hat{\beta_1}\\) of \\(\beta_1\\) by solving \\(\frac{\partial \ell}{\partial \beta_1}\bigr\rvert_{\beta_1=\hat{\beta_1}}\\) for \\(\hat{\beta_1}\\) and getting its standard error \\(\frac{-1}{\frac{\partial^2\ell}{\partial \beta_1^2}\bigr\rvert_{\beta_1=\hat{\beta_1}}}\\) by evaluating the curvature of the log-likelihood at the best estimate of \\(\beta_1\\).&nbsp; From these we can also get an estimate of the statistical significance.
 
 #### Linear mixed models ####
 
-In genome-wide association studies (GWAS) we'd like to estimate the odds ratio \\(e^{\beta_1}\\) for each SNP to see if any SNPs are associated with disease.  However, there are millions of SNPs and only thousands of subjects, so we cannot fit all the parameters simultaneously.  Instead, one SNP effect \\(\beta_1\\) is fit at a time together with other the covariate effects \\(\beta_j\\) against a background of the composite effect of all the remaining SNPs together, so that our model has two components:\\[Y_i=\log{\frac{p_i}{1-p_i}}=\sum_jX_{ij}\beta_j+\sum_jZ_{ij}u_j+\varepsilon_i.\tag{5}\\]Here, \\(\mathbf{Z}\\) is an \\(n\times m\\) matrix of the (standardized) genotypes of \\(n\\) individuals at \\(m\\) SNPs and \\(u_j\\) is the effect of SNP \\(j\\) on the log-odds for individual \\(i\\).  The mixed-model framework assumes the \\(u\\) come from a normal distribution with mean 0 and standard deviation \\(\sigma\\), so that each variant has but a small effect on disease risk.  
+In genome-wide association studies (GWAS) we'd like to estimate the odds ratio \\(e^{\beta_1}\\) for each SNP to see if any SNPs are associated with disease.&nbsp; However, there are millions of SNPs and only thousands of subjects, so we cannot fit all the parameters simultaneously.&nbsp; Instead, one SNP effect \\(\beta_1\\) is fit at a time together with the other *fixed* covariate effects \\(\beta_j\\) against a background of the composite, *random* effects of all the remaining SNPs together, so that our model has two components:\\[Y_i=\log{\frac{p_i}{1-p_i}}=\sum_jX_{ij}\beta_j+\sum_jZ_{ij}u_j+\varepsilon_i.\tag{5}\\]Here, \\(\mathbf{Z}\\) is an \\(n\times m\\) matrix of the (standardized) genotypes of \\(n\\) individuals at \\(m\\) SNPs and \\(u_j\\) is the effect of SNP \\(j\\) on the log-odds for individual \\(i\\).&nbsp; The mixed-model framework assumes the random \\(u\\) come from a normal distribution with mean 0 and standard deviation \\(\sigma\\), so that each variant has but a small effect on disease risk.  
 
-Now, the variance of the log-odds \\(Y\\) about its mean \\(\mathbf{X}\beta\\) becomes\\[\begin{align}\left(Y-\mathbf{X}\beta\right)\left(Y-\mathbf{X}\beta\right)^T&=\mathbf{Z}uu^T\mathbf{Z}^T+\varepsilon\varepsilon^T\\\\\\ &=\left(\mathbf{Z}\mathbf{Z}^T+\mathbf{I}\right)\sigma^2=\mathbf{V}.\end{align}\\]Rearranging and differntiating with respect to \\\(\beta_k\\) obtains (with summation over \\(i\\), \\(j\\), and \\(l\\))\\[\begin{align}V_{li}^{-1}X_{ik}\left(Y_l-X_{lj}\beta_j\right)^T+V_{il}^{-1}\left(Y_l-X_{lj}\beta_j\right)X^T_{ki}&=0\\\\\\ \left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)^T+\left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)&=0,\end{align}\\]since \\(\mathbf{V}\\) and hence \\(\mathbf{V}^{-1}\\) is a symmetric matrix.  And because the \\(k\\)<sup>th</sup> entry of a transposed vector is equal to the \\(k\\)<sup>th</sup> entry of the original vector, we get the maximum-likelihood solution\\[\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}\mathbf{X}\hat{\beta}=\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}Y,\tag{6}\\]where \\(\frac{1}{m}\mathbf{Z}\mathbf{Z}^T\\) is the genomic relationship matrix (GRM) we used to compute principle components in [Week 1](https://wletsou.github.io/assignments/week1).  Thus we can estimatimate the *fixed effects* \\(\beta\\)&mdash;including the SNP effect \\(\beta_1\\)&mdash;and their standard errors without fitting the *random effects* of every other SNP simultaneously.
+Now, the variance of the log-odds \\(Y\\) about its mean \\(\mathbf{X}\beta\\) becomes\\[\begin{align}\left(Y-\mathbf{X}\beta\right)\left(Y-\mathbf{X}\beta\right)^T&=\mathbf{Z}uu^T\mathbf{Z}^T+\varepsilon\varepsilon^T\\\\\\ &=\left(\mathbf{Z}\mathbf{Z}^T+\mathbf{I}\right)\sigma^2=\mathbf{V}.\end{align}\\]Rearranging and differntiating with respect to \\\(\beta_k\\) obtains (with summation over \\(i\\), \\(j\\), and \\(l\\))\\[\begin{align}V_{li}^{-1}X_{ik}\left(Y_l-X_{lj}\beta_j\right)^T+V_{il}^{-1}\left(Y_l-X_{lj}\beta_j\right)X^T_{ki}&=0\\\\\\ \left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)^T+\left(X^T_{ki}V_{il}^{-1}Y_l-X^T_{ki}V_{il}^{-1}X_{lj}\beta_j\right)&=0,\end{align}\\]since \\(\mathbf{V}\\) and hence \\(\mathbf{V}^{-1}\\) is a symmetric matrix.&nbsp; And because the \\(k\\)<sup>th</sup> entry of a transposed vector is equal to the \\(k\\)<sup>th</sup> entry of the original vector, we get the maximum-likelihood solution\\[\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}\mathbf{X}\hat{\beta}=\mathbf{X}^T\left(\mathbf{I}+\mathbf{Z}\mathbf{Z}^T\right)^{-1}Y,\tag{6}\\]where \\(\frac{1}{m}\mathbf{Z}\mathbf{Z}^T\\) is the genomic relationship matrix (GRM) we used to compute principle components in [Week 1](https://wletsou.github.io/assignments/week1).&nbsp; Thus we can estimatimate the *fixed effects* \\(\beta\\)&mdash;including the SNP effect \\(\beta_1\\)&mdash;and their standard errors without fitting the *random effects* of every other SNP simultaneously.
 
 ### Simulating genotypes and phenotypes ###
 
-Today we will be simulating a case-control study using the package <kbd>sim1000G</kbd> and the logistic model.  Then we will perform a "genome-wide" association study to discover the SNPs that affect disease risk.  We will need the following packages
+Today we will be simulating a case-control study using the package <kbd>sim1000G</kbd> and the logistic model.&nbsp; Then we will perform a "genome-wide" association study to discover the SNPs that affect disease risk.&nbsp; We will need the following packages:
 
 ```
 library(sim1000G)
@@ -41,31 +41,36 @@ library(GENESIS)
 library(GWASTools)
 library(SeqVarTools)
 library(data.table)
+library(fields)
 ```
 
 #### Importing data and simulating genotypes ####
 
-First get the file of individuals and their population codes:
+First get the [file](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB%2BYRI%2BCEU.txt) of individuals and their population codes:
 
 ```
 indivs <- read.table("path/to/file/CHB+YRI+CEU.txt",header = FALSE)
 colnames(indivs) <- c("id","pop")
 ```
 
-Then import the 1KG vcf file for one of the chromosomes using the sim1000G function <kbd>readVCF</kbd>.  Take 100 variants with minor allele frequencies between 0.10 and 0.90 to simulate genotypes comprising commmon variants across the chromosome. 
+Then import the [1KG vcf file](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB+YRI+CEU.chr1.vcf.gz) for chr1 using the sim1000G function <kbd>readVCF</kbd>.&nbsp;  Take 100 variants with minor allele frequencies between 0.10 and 0.90 to simulate genotypes comprising commmon variants across the chromosome: 
 
 ```
-vcf <- readVCF("OneDrive - New York Institute of Technology/Courses/BIOL 350 Spring 2023/CHB+YRI+CEU.chr1.vcf.gz", maxNumberOfVariants = 100 , min_maf = 0.10 , max_maf = 0.90)
+vcf <- readVCF("path/to/BIOL 350 Spring 2023/CHB+YRI+CEU.chr1.vcf.gz", maxNumberOfVariants = 100 , min_maf = 0.10 , max_maf = 0.90)
 ```
 
-Make a table of variants as we did [previously](https://wletsou.github.io/bioinformatics/assignments/week2/#making-a-table-of-variants); call it <kbd>variants</kbd>.  We will use this table to make a map file.
-
-Next simulate 2000 individuals from one of the three populations, also as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#simulating-individuals).  It is important that we use a large number of subjects so that we have enough statistical power to detect ORs near 1.  At the end of this step you should have two data tables <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.allele</kbd> of alleles on each of the two chromosomes of 2000 subjects.  We will use these tables to make a ped file.
-
-You should also have two 2000-by-100 data tables <kbd>dt.gt1</kbd> and <kbd>dt.gt2</kbd> of 0's and 1's, corresponding to the number of copies of the alternative allele on each chromosome.  Turn these into a matrix from which we can compute allele frequencies:
+Make a table of variants as we did [previously](https://wletsou.github.io/bioinformatics/assignments/week2/#making-a-table-of-variants); call it <kbd>variants</kbd>.&nbsp;  Use this table to make a map file <kbd>POP.simulation.chr1.map</kbd> (<kbd>POP</kbd> = <kbd>CHB</kbd>, <kbd>YRI</kbd>, or <kbd>CEU</kbd>) by 
 
 ```
-genotype.matrix <- as.matrix((dt.gt1 + dt.gt2)[,1:ncol(dt.gt1),,with = FALSE])
+write.table(data.frame(chr = variants$chr,rsid = variants$rsid,X = 0,pos = variants$pos),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/POP.simulation.chr1.map") # variant map file, POP = CHB, YRI, or CEU
+```
+
+Next simulate 2000 individuals from your choice of POP, also as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#simulating-individuals).&nbsp;  It is important that we use a large number of subjects so that we have sufficient statistical power to detect ORs near 1.&nbsp; At the end of this step you should have, using your presvious code, two data tables <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.allele</kbd> of alleles on each of the two chromosomes of 2000 subjects.&nbsp; We will use these tables to make a ped file.
+
+You should also have two 2000-by-100 data tables <kbd>dt.gt1</kbd> and <kbd>dt.gt2</kbd> of 0's and 1's, corresponding to the number of copies of the alternative allele on each chromosome.&nbsp; Turn these into a matrix from which we can compute allele frequencies:
+
+```
+genotype.matrix <- as.matrix(dt.gt1 + dt.gt2) # add alleles together and make genotype matrix
 colnames(genotype.matrix) <- 1:ncol(genotype.matrix)
 rownames(genotype.matrix) <- 1:nrow(genotype.matrix)
 ```
@@ -77,23 +82,25 @@ apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix)) # mino
 ```
 
 These values are called the *minor allele frequencies (MAF)* and will be used to simulate phenotypes.
+
 #### Simulating phenotypes ####
 
-We will simulate a binary phenotype by picking three alleles at random to increase the risk of disease.  We will weight the log-OR \\(\beta\\) by allele frequency according to the formula \\[\beta=\log{\left(10\right)}\times-\log_{10}{\left(\text{MAF}\right)}.\tag{7}\\]Eq. (7) says that the odds of disease increases by a factor of 10 for alleles which occur on only 10% of chromosomes.  This is a much stronger effect than most SNPs show, but implementing it will increase the power of our small study.  Choose and view the effect sizes using:
+We will simulate a binary phenotype by picking three alleles at random to increase the risk of disease.&nbsp; We will weight the log-OR \\(\beta\\) by allele frequency according to the formula \\[\beta=\log{\left(10\right)}\times-\log_{10}{\left(\text{MAF}\right)}.\tag{7}\\]Eq. (7) says that the odds of disease increases by a factor of 10 for alleles which occur on only 10% of chromosomes.&nbsp; This is a much stronger effect than most SNPs show, but implementing it will increase the power of our small study.&nbsp; Choose and view the effect sizes using:
 
 ```
-disease.snps <- sample(1:nrow(variants),3,replace = FALSE) # randomly select disease SNPs
+set.seed(your_student_id) # set random seed
+disease.snps <- sample(1:nrow(variants),3,replace = FALSE) # randomly select three disease SNPs
 beta <- log(10/1) * -log10(apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # weight log-OR by allele frequency
 rbind(beta,freq = apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # view frequency and beta values
 ```
 
-According to Eq. (2), the number of copies of each allele will increase the log-odds of disease for each subject by \\(X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3\\).  Carry out this matrix product by
+According to Eq. (2), the number of copies of each allele will increase the log-odds of disease for each subject by \\(X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3\\).&nbsp; Carry out this matrix product by
 
 ```
 logits <- genotype.matrix[,disease.snps] %*% (beta) # genotype matrix multiplied by column of beta values
 ```
 
-The baseline probability of disease in our study will be 50%, because there will be an approximately equal number of cases and controls, corresponding to a mean log-odds of \\(\log{\left(\frac{0.5}{0.5}\right)}=0\\).  In order that the mean log-odds should be zero, simply subtract the mean of <kbd>logits</kbd> from <kbd>logits</kbd> itself:
+The baseline probability of disease in our study will be 50%, because there will be an approximately equal number of cases and controls, corresponding to a mean log-odds of \\(\log{\left(\frac{0.5}{0.5}\right)}=0\\).&nbsp; In order that the mean log-odds should be zero, simply subtract the mean of <kbd>logits</kbd> from <kbd>logits</kbd> itself:
 
 ```
 logits <- logits + (0 - mean(logits)) # log-odds in a balanced case-control study
@@ -105,7 +112,7 @@ Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{
 probs <- exp(logits) / (1 + exp(logits)) # disease probability
 ```
 
-Now we can simulate the binary phenotype by drawing a random number between 0 and 1.  If the number is less than <kbd>probs[i]</kbd> for subject <kbd>i</kbd>, then subject <kbd>i</kbd> is a case; otherwise it is a control.  Simulate the phenotypes by
+Now we can simulate the binary phenotype by drawing a random number between 0 and 1.&nbsp; If the number is less than <kbd>probs[i]</kbd> for subject <kbd>i</kbd>, then subject <kbd>i</kbd> is a case; otherwise it is a control.&nbsp;  Simulate the phenotypes by
   
 ```
 pheno <- as.numeric(runif(nrow(probs)) <= probs) # generate disease phenotypes
@@ -115,38 +122,32 @@ Verify that the mean of <kbd>pheno</kbd> is close to 0.5.
   
 #### Saving your genotype and phenotypes ####
   
-[Last time](https://wletsou.github.io/bioinformatics/assignments/week2/#generating-a-gds-file-from-your-ped-and-map-files) we generated map and ped files from our data.  The map file can be simply got from your <kbd>variants</kbd> table using
-
-```
-write.table(data.frame(chr = variants$chr,rsid = variants$rsid,X = 0,pos = variants$pos),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/GWAS.simulation.map") # variant map file
-```
-
 To make a ped file with phenotype information, we first need to make a six-column data frame to prepend the genotypes:
 
 ```
-fam <- data.frame(fid = row.names(genotype.matrix),id = row.names(genotype.matrix), mother = 0,father = 0,sex = sample(c(0,1),nrow(genotype.matrix),replace = TRUE),phenotype = pheno) # variant map file
+fam <- data.frame(fid = row.names(genotype.matrix),id = row.names(genotype.matrix), mother = 0,father = 0,sex = sample(c(0,1),nrow(genotype.matrix),replace = TRUE),phenotype = pheno) # variant ped file
 ```
 
-This <kbd>fam</kbd> object is the pedigree of a cohort of unrelated individuals having an approximately equal distributions of cases and controls and men and women.  Now, prepend these six columns to the vector of each subject's alleles on each of its two chromosomes:
+This <kbd>fam</kbd> object is the pedigree of a cohort of unrelated individuals having an approximately equal distributions of cases and controls and men and women.&nbsp; Now, prepend these six columns to the vector of each subject's alleles on each of its two chromosomes:
 
 ```
-write.table(cbind(fam,data.frame(cbind(dt.gt1.allele,dt.gt2.allele))[,rep(1:ncol(dt.gt1.allele.ceu),each = 2) + (0:1) * ncol(dt.gt1.allele.ceu)]),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "OneDrive - New York Institute of Technology/Courses/BIOL 350 Spring 2023/CEU.simulation.ped") # genotype .ped file
+write.table(cbind(fam,data.frame(cbind(dt.gt1.allele,dt.gt2.allele))[,rep(1:ncol(dt.gt1.allele),each = 2) + (0:1) * ncol(dt.gt1.allele)]),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/POP.simulation.chr1.ped") # genotype .ped file,  POP = CHB, YRI, or CEU
 ```
 
-This will be our ped file.  Verify that the object you created has 2000 rows and 206 columns (what do these numbers represent?).
+This will be our ped file.&nbsp; Verify that the object you created has 2000 rows and 206 columns (what do these numbers represent?).
 
 ### Association testing ###
 
-In the next part of the analysis, our goal is to use the <kbd>GENESIS</kbd> package to estimate the log-OR associate with each SNP in our dataset.  According to Eq. (6), we need the GRM to do this properly.  GENESIS requires that the GRM be in a specific form, which we will achieve by following the protocol for PC-AiR and PC-Relate.  First of all, we need principal components from the implementation of KING in SNPRelate.
+In the next part of the analysis, our goal will be to use the <kbd>GENESIS</kbd> package to estimate the log-OR associated with each SNP in our dataset.  According to Eq. (6), we need the GRM to do this properly.&nbsp;  GENESIS requires that the GRM be in a specific form, which we will achieve by following the protocol for PC-AiR and PC-Relate.&nbsp;  First of all, we need principal components from the implementation of KING in SNPRelate.
 
 #### PCA, LD pruning, and KING in SNPRelate ####
 
 If you successfully created map and ped files, you can convert them to a gds object using the SNPRelate package:
 
 ```
-snpgdsPED2GDS("path/to/file/GWAS.simulation.ped","path/to/file/GWAS.simulation.map","path/to/file/GWAS.simulation.gds")
-snpgdsSummary("path/to/file/GWAS.simulation.gds")
-genofile <- SNPRelate::snpgdsOpen("path/to/file/GWAS.simulation.gds")
+snpgdsPED2GDS("path/to/file/POP.simulation.chr1.ped","path/to/file/POP.simulation.chr1.map","path/to/file/POP.simulation.chr1.gds")
+snpgdsSummary("path/to/file/POP.simulation.chr1.gds")
+genofile <- SNPRelate::snpgdsOpen("path/to/file/POP.simulation.chr1.gds")
 ```
 
 As in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1), generate KING PCA estimates by
@@ -155,29 +156,33 @@ As in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1), gene
 pca <- snpgdsPCA(genofile) # principal components analysis
 ```
 
-Like we did before, make a plot of the first few PCs.  We're only using a single population now; how is your PCA plot different from when we used three?
+Like we did before, make a plot of the first few PCs.&nbsp;  We're only using a single population now; how is your PCA plot different from when we used three?
 
 Next perform [LD-pruning](https://wletsou.github.io/bioinformatics/assignments/week2/#ld-pruning) to get a set of unlinked SNPs:
 
 ```
-snpset <- snpgdsLDpruning(genofile,method="corr", slide.max.bp=10e6,ld.threshold=sqrt(0.1), verbose=FALSE)
-pruned <- unlist(snpset, use.names=FALSE)
+snpset <- snpgdsLDpruning(genofile,method = "corr", slide.max.bp = 10e6,ld.threshold = sqrt(0.1), verbose = FALSE)
+pruned <- unlist(snpset, use.names = FALSE)
 ```
 
-There is a possibility your disease SNPs will removed by this analysis, but only if they can be represented by a proxy SNP.  Make and plot the LD matrix for your data using
+There is a possibility your disease SNPs will removed by this analysis, but only if they can be represented by proxy SNPs.  Make and plot the LD matrix for your data using:
 
 ```
-LD.mat <- snpgdsLDMat(genofile, snp.id=pruned, slide = 0,method = "corr")
-fields::image.plot(1:nrow(LD.mat$LD),1:ncol(LD.mat$LD),LD.mat$LD ^ 2,main = "LD r2",xlab = "SNPs",ylab = "SNPs")
+LD.mat <- snpgdsLDMat(genofile, snp.id = pruned, slide = 0,method = "corr")
+fields::image.plot(1:nrow(LD.mat$LD),1:ncol(LD.mat$LD),LD.mat$LD ^ 2,main = "LD r2",xlab = "SNPs",ylab = "SNPs",asp = 1,frame.plot = FALSE)
 ```
 
 Finally, we will use our pruned set of SNPs to get kinship estimates for our subjects:
 
 ```
 ibd <- snpgdsIBDKING(genofile,snp.id = pruned)
+colnames(ibd$kinship) <- ibd$sample.id
+rownames(ibd$kinship) <- ibd$sample.id
 ```
 
-Make a plot of the kinship coefficient vs. the IBS0 proportion as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#king).  Now we can close our gds object before moving on to PC-AiR and PC-Relate.
+Make a plot of the kinship coefficient vs. the IBS0 proportion as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#king).  
+
+We can now close our gds object before moving on to PC-AiR and PC-Relate:
 
 ```
 closefn.gds(genofile)
@@ -186,47 +191,47 @@ closefn.gds(genofile)
 If you have trouble, try
 
 ```
-showfile.gds(closeall=TRUE)
+showfile.gds(closeall = TRUE)
 ```
 
 #### PC-AiR, PC-Relate, and the revised GRM ####
 
-We will follow the [same steps](https://wletsou.github.io/bioinformatics/assignments/week2/#pc-air-and-pc-relate) as last week to get a revised GRM for association analysis.  First use <kbd>GWASTools</kbd> to get GenotypeData object from uour gds file, as required by PC-AiR:
+We will follow the [same steps](https://wletsou.github.io/bioinformatics/assignments/week2/#pc-air-and-pc-relate) as last week to get a revised GRM for association analysis.&nbsp; First use <kbd>GWASTools</kbd> to get GenotypeData object from uour gds file, as required by PC-AiR:
 
 ```
-geno <- GdsGenotypeReader("path/to/file/GWAS.simulation.gds")
+geno <- GdsGenotypeReader("path/to/file/GWAS.simulation.chr1.gds")
 genoData <- GenotypeData(geno)
 ```
 
-Now run <kbd>pcair</kbd> to get genotype principal components based on an unrelated, ancestry-representative subset of subjects.  You will need the output of the KING kinship analysis first.
+Now run <kbd>pcair</kbd> to get genotype principal components based on an unrelated, ancestry-representative subset of subjects.&nbsp; You will need the output of the KING kinship analysis first.
 
 ```
 mypcair <- pcair(genoData,kinobj = ibd$kinship,divobj = ibd$kinship,snp.include = pruned) # genotype principal components based on a subset of unrelated individuals
 ```
 
-See how the PC estimates have changed for the first few PCs using
+See how the PC estimates have changed for the first few PCs using:
 
 ```
-plot(pcair,vx = 1 vy = 2) # plot of PC2 vs PC1
+plot(mypcair,vx = 1, vy = 2) # plot of PC2 vs PC1 using GENESIS package method
 ```
 
-Now we'll create a GenotypeBlockIterator object, as required by PC-Relate
+Now we'll create a GenotypeBlockIterator object, as required by PC-Relate:
 
 ```
 genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
 ```
 
-Recall that PC-relate updates the kinship coefficients by adjusting out shared genetic ancestry and looking only for sharing between close relatives.  We can get and plot our new estimates using
+Recall that PC-relate updates the kinship coefficients by adjusting out shared genetic ancestry and looking only for sharing between close relatives.&nbsp; We can get and plot our new estimates using:
 
 ```
-mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:10],training.set = mypcair$unrels) # kinship based on unrelated individuals
-plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBS0 proportion",ylab = "Kinship coefficient",main = "PC-relate relatedness estimation") # kinship vs. IBD0
+mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:2],training.set = mypcair$unrels) # kinship based on unrelated individuals
+plot(mypcrel$kinBtwn$k0,mypcrel$kinBtwn$kin,xlab = "IBD0 proportion",ylab = "Kinship coefficient",main = "PC-relate relatedness estimation") # kinship vs. IBD0
 ```
 
 and update the GRM using
 
 ```
-myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genotype relatedness matrix  
+myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genomic relationship matrix, multiplying each phi by 2  
 ```
 
 Print out a ten-by-ten sample of the GRM to see if your results make sense.
@@ -235,55 +240,61 @@ With this GRM, we're ready to do the association test.
 
 #### Association testing ####
 
-This analysis should now be new.  We're first going to fit a *null* model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+\sum_jZ_{ij}u_j\tag{9}\\]with ten PCs as fixed effects and all SNPs as random effects and compare it to a model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+X_{ik}\beta_k+\sum_jZ_{ij}u_j\tag{10}\\]with a single SNP effect.  We will estimate \\(\hat{\beta_k}\\) for each SNP \\(k\\) and estimate its statistical significance.
+To measure the SNP effects, we're first going to fit a *null* model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+\sum_jZ_{ij}u_j\tag{9}\\]with ten PCs as fixed effects and all SNPs as random effects and then compare it to a model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+X_{ik}\beta_k+\sum_jZ_{ij}u_j\tag{10}\\]with a single SNP effect.&nbsp; We will estimate \\(\hat{\beta_k}\\) for each SNP \\(k\\) and estimate its statistical significance.
 
-Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.  GENESIS requires us to convert a data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.  Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
+Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.&nbsp; GENESIS requires us to convert a data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.&nbsp; Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
 
 ```
 mydat <- data.frame(scanID = mypcair$sample.id,pc1 = mypcair$vectors[,1],pc2 = mypcair$vectors[,2],pc3 = mypcair$vectors[,3],pc4 = mypcair$vectors[,4],pc5 = mypcair$vectors[,5],pc6 = mypcair$vectors[,6],pc7 = mypcair$vectors[,7],pc8 = mypcair$vectors[,8],pc9 = mypcair$vectors[,9],pc10 = mypcair$vectors[,10],pheno = pheno) # data frame of fixed effects
 ```
 
-Then convert it to a <kbd>ScanAnnotationDataFrame</kbd>, run
+Then convert it to a <kbd>ScanAnnotationDataFrame</kbd> using:
 
 ```
 scanAnnot <- ScanAnnotationDataFrame(mydat)
 ```
 
-We can use this object in the GENESIS function <kbd>fitNullModel</kbd>, which fits model (9).  We will have to specify the regression <kbd>outcome</kbd> and a vector <kbd>covars</kbd> of covariates, both consisting of text labels of the fields of <kbd>mydat</kbd> as they appear in <kbd>scanAnnot</kbd>.  We also need to specify the covariance matrix GRM for including the random effects, and, since we're doing logistic regression, an indication that our likelihood function is of the binomial family:
+We can use this object in the GENESIS function <kbd>fitNullModel</kbd>, which fits model (9).&nbsp; We will have to specify the regression <kbd>outcome</kbd> and a vector <kbd>covars</kbd> of covariates, both consisting of text labels of the fields of <kbd>mydat</kbd> as they appear in <kbd>scanAnnot</kbd>.&nbsp;  We also need to specify the covariance matrix GRM for including the random effects, and, since we're doing logistic regression, an indication that our likelihood function is of the binomial family:
 
 ```
 nullmod <- fitNullModel(scanAnnot, outcome = "pheno", covars = c("pc1","pc2","pc3","pc4","pc5","pc6","pc7","pc8","pc9","pc10"), cov.mat = myGRM, family = "binomial")
 ```
 
-Now, to fit model (10) for each SNP, we'll use our <kbd>GenotypeBlockIterator</kbd> object to see if any SNPs significantly increase the likelihood.  If adding a SNP to the model causes the log-likelihood function (4) to get significantly bigger, we accept it in the model.  Run
+This step may take a few iterations to complete.&nbsp; Now, to fit model (10) for each SNP, we'll use our <kbd>GenotypeBlockIterator</kbd> object to see if any SNPs significantly increase the likelihood.&nbsp;  If adding a SNP to the model causes the log-likelihood function (4) to get significantly bigger, we accept it in the model.&nbsp; Run
 
 ```
 assoc <- assocTestSingle(genoData.iterator,null.model = nullmod)
 ```
 
-to get a table of the tested variants along with the <kbd>Score.pval</kbd> for each one.  Make a *Manhattan plot* by plottong \\(-\log_{10}{p}\\) vs. SNP position:
+to get a table of the tested variants along with the <kbd>Score.pval</kbd> for each one.&nbsp;  Make a *Manhattan plot* by plottong \\(-\log_{10}{p}\\) vs. SNP position:
 
 ```
-plot(assoc$pos,-log10(assoc$Score.pval),xlab = "Position",ylab = "-log10(p)")
-abline(h = -8 * log10(5),col = 'red',lty = 2)
+plot(assoc$pos,-log10(assoc$Score.pval),xlab = "Position",ylab = "-log10(p)") # Manhattan plot
+abline(h = -8 * log10(5),col = 'red',lty = 2) # genome-wide significance threshold
 ```
 
-Are any SNPs above the genome-wide significance level \\(p=5.0\times10^{-8}\\).  Extract the SNPs <kbd>disease.snps</kbd> from <kbd>assoc</kbd> using
+Are any SNPs above the genome-wide significance level \\(p=5.0\times10^{-8}\\)?&nbsp; Extract the SNPs <kbd>disease.snps</kbd> from <kbd>assoc</kbd> using
 
 ```
 assoc[assoc$variant.id %in% disease.snps,]
 ```
 
-and see if the OR estimates agree with the values <kbd>exp(beta)</kbd> you previously assigned.
+and see if the lo-OR estimates <kbd>Est</kbd> agree with the values <kbd>beta</kbd> you previously assigned in 
 
-Finally, we're going to make a QQ (quantile-quantile) plot to see if the observed association p-values depart from expectation.  If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest greater than or equal to \\(i\\)% of the other p-values; these are the expected quantiles.  The observed quantiles are the observed p-values in sorted order, representing the probability that a score statistic is greater or equal to \\(100p\\)% of other score statistics.  Instead of plotting on the nominal scale, we negative-log10 transform each value.  Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.  We can generate such a plot by
+```
+rbind(beta,freq = apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # view frequency and beta values
+```
+
+You may have to multiply <kbd>Est</kbd> by <kbd>-1</kbd> if the allele frequency is reversed.
+
+Finally, we're going to make a QQ (quantile-quantile) plot by sorting the p-values to see if the observed association statistics depart from expectation.&nbsp; If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest quantile greater than or equal to \\(i\\)% of the other quantiles.&nbsp; We compare to this expected p-value to the observed p-value, which represents the probability that a score statistic greater or equal to \\(100p\\)% of other score statistics should have been obtained.&nbdp; Instead of plotting on the nominal scale, we negative-log10 transform each value.&nbsp; Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.&nbsp; We can generate such a plot by
 
 ```
 qqplot(sort(-log10((1:length(assoc$Score.pval))/length(assoc$Score.pval))),sort(-log10(assoc$Score.pval)),xlab = "Expected −log10(p)",ylab = "Observed −log10(p)",pch = 19)
 qqline(sort(-log10(assoc$Score.pval)),probs = c(0.25,0.75),col = 'red') # line through (-log10(empirical Q1),-log10(p-value of empirical Q1)) and (-log10(empirical Q3),-log10(p-value of empirical Q3))
 ```
 
-Each point represents an association test for one of the SNPs.  Do any significantly depart from the line of identity?
+Each point represents an association test for one of the SNPs.&nbsp;  Do any SNPs significantly depart from the line of identity?
 
 When you're done with this analysis, close your genotypeData object:
 
@@ -291,4 +302,9 @@ When you're done with this analysis, close your genotypeData object:
 close(genoData)
 ```
 
-### Your report ###
+### To turn in: ###
+
+1. Three PCA plots output by PC-AiR to show whether your population has homogeneous genetic ancestry
+2. A Manhattan plot of the single-SNP association tests
+3. A QQ plot for the same
+4. A table for the three disease SNPs and their MAFs comparing the true OR with the estimated OR and p-value
