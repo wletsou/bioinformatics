@@ -1,6 +1,8 @@
 ---
 layout: "single"
 title: "Files"
+sidebar:
+  nav: "side"
 permalink: /files/
 ---
 
