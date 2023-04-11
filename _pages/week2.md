@@ -288,7 +288,7 @@ genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
 Now we'll use PC-Relate to update the kinship coefficients for the entire sample based on the fact that the GRM is biased when genotypes are standardized to allele frequencies measured among related individuals.&nbsp;  To get a corrected GRM, we supply PC-Relate with the PC results from PC-AiR and the list of unrelated individuals for training the model:
 
 ```
-mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:2],training.set = mypcair$unrels) # kinship based on unrelated individuals
+mypcrel <- pcrelate(genoData.iterator,pcs = mypcair$vectors[,1:3],training.set = mypcair$unrels) # kinship based on unrelated individuals
 myGRM <- pcrelateToMatrix(mypcrel,scaleKin = 2) # genotype relatedness matrix 
 ```
 
