@@ -10,7 +10,7 @@ permalink: /assignments/week1/
 
 ### Importing the data
 
-First we'll see how individuals can be separated by genetic ancestry using principal components analysis.&nbsp; First we'll need to load the libraries <kbd>SNPRelate</kbd> and <kbd>SeqArray</kbd>:
+Today we'll see how individuals can be separated by genetic ancestry using principal components analysis.&nbsp; First we'll need to load the libraries <kbd>SNPRelate</kbd> and <kbd>SeqArray</kbd>:
 
 ```
 library(SNPRelate)
@@ -47,20 +47,21 @@ The populations in our dataset can be separated into clusters based on their gen
 To run PCA in R, simply do
 
 ```
-pca <- snpgds(genofile) # runs PCA
+pca <- snpgdsPCA(genofile) # runs PCA
+colnames(indivs) <- c("id","pop")
 ```
 
 to create an objects with 32 eignevectors of the GRM.  Make a data frame of the first several eigenvectors along with subject ids:
 
 ```
-df.pca <- data.frame(sample = pca$sample.id,EV1 = pca$eigenvect[,1],EV2 = pca$eigenvect[,3],EV1 = pca$eigenvect[,3],stringsAsFactors = FALSE)
+df.pca <- data.frame(sample = pca$sample,EV1 = pca$eigenvect[,1],EV2 = pca$eigenvect[,2],EV3 = pca$eigenvect[,3],stringsAsFactors = FALSE)
 ```
 
 We'll plot individuals along EV1, EV2, and EV3 in several two-dimensional projections.&nbsp; But we'll want to see how the clustering done by PCA corresponds to individuals' self-reported race; for that we'll need another column in our data frame.
 
 #### Getting population labels ####
 
-The indivs [file](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB%2BYRI%2BCEU.txt) contains each subject id along with its 1KG population group. Let's import it now
+The indivs [file](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CHB%2BYRI%2BCEU.txt) contains each subject id along with its 1KG population group.&nbsp; Let's import it now
 
 ```
 indivs <- read.table("path/to/CHB+YRI+CEU.txt",header = TRUE)
@@ -69,7 +70,7 @@ indivs <- read.table("path/to/CHB+YRI+CEU.txt",header = TRUE)
 The second field of this table is <kbd>pop</kbd>, an assignment to each <kbd>id</kbd> of one of three 1KG population groups.&nbsp; We want to match the right id in <kbd>indivs</kbd> to the right id in <kbd>df.pca</kbd> so that we can color our PCA plots by population.&nbsp; If the tables are in the same order, matching will be easy, but it not, we have to use the <kbd>match(x,y)</kbd> function, which finds the positions in <kbd>y</kbd> corresponding to the same items in <kbd>x</kbd>.&nbsp; Thus we can make a new column <kbd>pop</kbd> in <kbd>df.pca</kbd> with the corresponding <kbd>pop</kbd> values from <kbd>indivs</kbd> by
 
 ```
-df.pca$pop[match(indivs$id,df.pca$sample.id)] <- indivs$pop # find the population group of each individual in df.pca
+df.pca$pop[match(indivs$id,df.pca$sample)] <- indivs$pop # find the population group of each individual in df.pca
 ```
 #### Plotting ####
 
@@ -80,7 +81,17 @@ plot(df.pca$EV1,df.pca$EV2,pch = 19,col = factor(df.pca$pop),xlab = "PC1",ylab =
 legend("topright",legend = levels(factor(df.pca$pop)),bty = "n",pch = 19,col = factor(levels(factor(df.pca$pop)))) # with a legend
 ```
 
-Move the legend around if it covers any points, and make similar plots for the other two comparisons between the first three PCs.&nbsp; Questions for you to discuss are:
+Move the legend around if it covers any points, and make similar plots for the other two comparisons between the first three PCs.
+
+#### To turn in: ####
+
+Make color-coded plots with legends for each of:
+
+1. PC2 vs. PC1
+2. PC3 vs. PC1
+3. PC3 vs. PC2
+
+For each plot, explain:
 
 1. Are the populations well separated in PCA space?
 2. What gradients do the different PCs represent?  That is, what axis of variation does each PC appear to explain? 
