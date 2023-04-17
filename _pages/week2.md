@@ -104,7 +104,7 @@ where the first six fields are numbers and the seventh through last fields are a
 5. Sex
 6. Phenotype
 
-Since we're simulating unrelated individuals, fields 3 and 4 can both be blank (i.e., the individual has no parents in the dataset), and fields 1 and 2 can be identical (i.e., each individual belongs to its own family).&nbsp; Sex is coded as 1 for male and 2 for female, and phenotype is code as 1 for unaffected and 2 for affected.&nbsp; So the recod above for individual 1 corresponds to an unaffected male.&nbsp;  The 4000 alleles for each of the 2000 SNPs come afterward in pairs.&nbsp; There is no explicit phase information in ped files, but we can assume that the odd-numbered alleles are paternal and the evens maternal.
+Since we're simulating unrelated individuals, fields 3 and 4 can both be blank (i.e., the individual has no parents in the dataset), and fields 1 and 2 can be identical (i.e., each individual belongs to its own family).&nbsp; Sex is coded as 1 for male and 2 for female, and phenotype is coded as 1 for unaffected and 2 for affected.&nbsp; So the recod above for individual 1 corresponds to an unaffected male.&nbsp;  The 4000 alleles for each of the 2000 SNPs come afterward in pairs.&nbsp; There is no explicit phase information in ped files, but we can assume that the odd-numbered alleles are paternal and the evens maternal.
 
 The challenge will be to get our simulated data into ped format.
 
@@ -180,7 +180,7 @@ Now, to interleave the columns of our <kbd>dt.gt1.allele</kbd> and <kbd>dt.gt2.a
 cbind(dt.gt1.allele.chb,dt.gt2.allele.chb)[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)]
 ```
 
-Then we'll group these tables (one for each population) in an R <kbd>list</kbd> and <kbd>Reduce</kbd> the <kbd>rbind</kbd> function over the three entries of the list to make a table with 300 rows, which we'll finally join to our <kbd>fam</kbd> object above.  Save this table as file using a similar naming scheme you used for the map file.
+Then we'll group these tables (one for each population) in an R <kbd>list</kbd> and <kbd>Reduce</kbd> the <kbd>rbind</kbd> function over the three entries of the list to make a table with 300 rows, which we'll finally join to our <kbd>fam</kbd> object above.&nbsp;  Save this table as file using a similar naming scheme you used for the map file.
 
 ```
 write.table(cbind(fam,Reduce(rbind,list(data.frame(cbind(dt.gt1.allele.chb,dt.gt2.allele.chb))[,rep(1:ncol(dt.gt1.allele.chb),each = 2) + (0:1) * ncol(dt.gt1.allele.chb)],data.frame(cbind(dt.gt1.allele.yri,dt.gt2.allele.yri))[,rep(1:ncol(dt.gt1.allele.yri),each = 2) + (0:1) * ncol(dt.gt1.allele.yri)],data.frame(cbind(dt.gt1.allele.ceu,dt.gt2.allele.ceu))[,rep(1:ncol(dt.gt1.allele.ceu),each = 2) + (0:1) * ncol(dt.gt1.allele.ceu)]))),col.names = FALSE,row.names = FALSE,quote = FALSE,file = "path/to/file/CHB+YRI+CEU.simulation.chr1.ped") # save .ped file
@@ -200,13 +200,9 @@ If you have any trouble with this step, you can close all open gds objects with
 showfile.gds(closeall=TRUE)
 ```
 
-### Principal components analysis ###
-
-With this gds object, run PCA as in [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1) to make sure your sampled individuals cluster into three distinct genotype groups.  Make plots of the first three PCs.
-
 ### Kinship analysis ###
 
-The kinship analysis program [KING](https://academic.oup.com/bioinformatics/article/26/22/2867/228512?login=false) is used to estimate whether any individuals are related to each other.  Cryptic relatedness can bias the results of association studies, so we should correct for it.  KING works by comparing the alleles of each SNP for a pair of individuals.  Before we get into computing the genetic relationship coefficient, we first need to reduce our SNP set to a list of approximately independent alleles.  This first step is known as *LD-pruning*.
+The kinship analysis program [KING](https://academic.oup.com/bioinformatics/article/26/22/2867/228512?login=false) is used to estimate whether any individuals are related to each other.&nbsp;  Cryptic relatedness can bias the results of association studies, so we should correct for it.  KING works by comparing the alleles of each SNP for a pair of individuals.&nbsp;  Before we get into computing the genetic relationship coefficient, we first need to reduce our SNP set to a list of approximately independent alleles.&nbsp;  This first step is known as *LD-pruning*.
 
 #### LD-pruning ####
 
@@ -217,7 +213,7 @@ snpset <- snpgdsLDpruning(genofile,method = "corr", slide.max.bp = 10e6,ld.thres
 pruned <- unlist(snpset, use.names=FALSE) # get the pruned list
 ```
 
-This function computes the correlation coefficient \\(r_{i,j}\\) between each pair of SNPs and removes those with \\(r < \sqrt{0.1}\\) or LD \\(r^2 < 0.1\\) with an index SNPs.&nbsp;  The computation is restricted to SNPs in ten-million-bp windows.  To see that your SNPs are indepdents, make and plot a matrix of the \\(r^2\\) values for each pair of SNPs using
+This function computes the correlation coefficient \\(r_{i,j}\\) between each pair of SNPs and removes those with \\(r < \sqrt{0.1}\\) or LD \\(r^2 < 0.1\\) with an index SNPs.&nbsp;  The computation is restricted to SNPs in ten-million-bp windows.&nbsp;  To see that your SNPs are indepdents, make and plot a matrix of the \\(r^2\\) values for each pair of SNPs using
 
 ```
 LD.mat <- snpgdsLDMat(genofile, snp.id = pruned, slide = 0,method = "corr") # creates LD matrix of r values
@@ -238,7 +234,7 @@ From (3a)&ndash;(3c), the fraction of the genome shared IBD is\\[r=\frac{2\pi_2+
 
 #### KING ####
 
-KING computes both the probability \\(\pi_0\\) that two relatives share 0 alleles IBD as well as the coefficient of relatedness \\(\phi=\frac{r}{2}\\), defined as the probability that two alleles taken one from each relative are IBD at a locus (the maximum probability is \\(\frac{1}{2}\\) because there is a 50% chance that the alleles chosen come from different parents).&nbsp; The idea is to count the number \\(N\\) of times two individuals are heterozygous \\(Aa,Aa\\) or opposite homozygous \\(AA,aa\\) at the same locus to come up with an estimator\\[\hat{\phi_{ij}}=\frac{N_{Aa,Aa}-2N_{AA,aa}}{N_{Aa}^{\left(i\right)}+N_{Aa}^{\left(j\right)}}\tag{5}\\] of relatedness relative to the total number of alleles at which each individual is heterozygous \\(Aa\\).&nbsp; From (5) it can be seen that shared heterozygous sites increase the estimated relatedness and unshared homozygous sites decrease relatedness.&nbsp;  The estimated \\(\phi_{ij}\\) can even be negative if individuals are drawn from different genetic backgrounds, giving us an alternative to PCA.
+KING computes both the probability \\(\pi_0\\) that two relatives share 0 alleles IBD as well as the coefficient of relatedness \\(\phi=\frac{r}{2}\\), defined as the probability that two alleles taken one from each relative are IBD at a locus (the maximum probability is \\(\frac{1}{2}\\) because there is a 50% chance that the alleles chosen come from different parents).&nbsp; The idea is to count the number \\(N\\) of times two individuals are heterozygous \\(Aa,Aa\\) or opposite homozygous \\(AA,aa\\) at the same locus to come up with an estimator\\[\hat{\phi_{ij}}=\frac{N_{Aa,Aa}-2N_{AA,aa}}{N_{Aa}^{\left(i\right)}+N_{Aa}^{\left(j\right)}}\tag{5}\\] of relatedness relative to the total number of alleles at which each individual is heterozygous \\(Aa\\).&nbsp; From (5) it can be seen that shared heterozygous sites increase the estimated relatedness and unshared homozygous sites decrease relatedness.&nbsp;  Eq. (5) is called a "robust" estimator because it measures relatedness in a purely pairwise fashion; it does not rely on population estimates of allele frequencies.&nbsp; However, the estimated \\(\phi_{ij}\\) can be negative if individuals are drawn from different genetic backgrounds, giving us an alternative to PCA.
 
 To run KING we need only a gds object and a set of SNPs.&nbsp;  We will use the LD-pruned set <kbd>pruned</kbd> we computed above and the <kbd>genofile</kbd> containing simulated haplotypes from CHB, YRI, and CEU individuals.&nbsp;  Running
 
@@ -251,7 +247,7 @@ rownames(ibd$kinship) <- ibd$sample.id
 will gives us an object <kbd>ibd</kbd> that contains two matrics <kbd>$IBS0</kbd> and <kbd>$kinship</kbd> that contain the probabilities of sharing zero alleles identical by state (IBS, not IBD) and the estimated kinship coefficients.&nbsp; Make a plot of <kbd>IBS0</kbd> vs. <kbd>kinship</kbd> to see if subjects who share few alleles IBS are unrelated:
 
 ```
-plot(ibd$IBS0,ibd$kinship,xlab = "Kinship coeffecient",ylab = "IBS0",main = "KING relatedness estimation")
+plot(ibd$IBS0,ibd$kinship,ylab = "Kinship coeffecient",xlab = "IBS0 proportion",main = "KING relatedness estimation")
 ```
 
 You should see that most values are negative, indicating that individuals come from different populations.&nbsp;  Recalling that individuals 1 to 100 are CHB, 101 to 200 are YRI, and 201 to 300 are CEU, make plots for the populations separately to see if you get fewer negative values.
@@ -279,7 +275,15 @@ Now we'll run PC-AiR to identify and compute PCs of a subset of unrelated indivi
 mypcair <- pcair(genoData,kinobj = ibd$kinship,divobj = ibd$kinship,snp.include = pruned) # genotype principal components based on a subset of unrelated individuals
 ```
 
-The important part of the output is the field <kbd>$vectors</kbd> containing new PCs for this unrelated subset of individuals.&nbsp; Next we will create a <kbd>GenotypeBlockIterator</kbd> needed for PC-Relate.&nbsp; This object is important for running genome-wide analyses in parallel for millions of SNPs; we only have about 1000 SNPs, so parallelization is unnecessary.
+You can quickly generate plots of the principal components using:
+
+```
+plot(mypcair,vx = 1, vy = 2) # plot of PC2 vs PC1
+```
+
+The black dots represent the "ancestry-representative subset" for whom PCs have been computed and the blue dots individuals whose PCs have been estimated based on their similarity to the reprentatives.&nbsp; Do the PCs look similar to your output from last week?
+
+The important part of <kbd>mypcair</kbd> is the field <kbd>$vectors</kbd> containing new PCs for this unrelated subset of individuals.&nbsp; Next we will create a <kbd>GenotypeBlockIterator</kbd> needed for PC-Relate.&nbsp; This object is important for running genome-wide analyses in parallel for millions of SNPs; we only have about 1000 SNPs, so parallelization is unnecessary.
 
 ```
 genoData.iterator <- GenotypeBlockIterator(genoData,snpInclude = pruned)
