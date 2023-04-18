@@ -146,23 +146,7 @@ Before we interleave the columns of these tables to make a ped file, **repeat th
 
 #### Generating a gds file from your ped and map files ####
 
-Once you have the six data tables <kbd>dt.gt1.allele.ceu</kbd> to <kbd>dt.gt2.allele.chb</kbd>, which should each look something like
-
-```
-    rs74512038 rs144694530 rs28869591 rs9442612 rs6689308 rs11466682 rs61776786 rs8841 rs10907185 rs12125178
- 1:          C           C          C         A         A          G          G      A          G          G
- 2:          C           C          C         A         A          G          G      A          G          G
- 3:          C           C          T         G         A          G          G      T          G          G
- 4:          C           C          C         G         A          G          A      T          G          G
- 5:          C           C          C         G         A          G          G      T          G          G
- 6:          C           C          C         A         A          G          G      A          A          G
- 7:          C           C          C         A         A          G          A      A          G          G
- 8:          C           C          C         A         A          G          G      A          A          G
- 9:          C           C          C         A         A          G          A      A          A          G
-10:          C           C          T         G         A          G          A      T          G          G
-```
-
-you're ready to make a ped file and convert it into a gds object suitable for <kbd>SNPRelate</kbd> and <kbd>GENESIS</kbd>.&nbsp; First let's create the six numeric columns of the file for our 300 individuals.&nbsp;  All we need is to number individuals/families from 1 to 300 (<kbd>=nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)</kbd>) and ensure they have no parents in the data.&nbsp;  We'll randomly select the subject's sex and for now assume that each individual is unaffected.
+Once you have the six data tables <kbd>dt.gt1.allele.ceu</kbd> to <kbd>dt.gt2.allele.chb</kbd>, you're ready to make a ped file and convert it into a gds object suitable for <kbd>SNPRelate</kbd> and <kbd>GENESIS</kbd>.&nbsp; First let's create the six numeric columns of the file for our 300 individuals.&nbsp;  All we need is to number individuals/families from 1 to 300 (<kbd>=nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)</kbd>) and ensure they have no parents in the data.&nbsp;  We'll randomly select the subject's sex and for now assume that each individual is unaffected.
 
 ```
 fam <- data.frame(fid = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)),id = 1:(nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)), mother = 0,father = 0,sex = sample(c(0,1),nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu),replace = TRUE),phenotype = 1) # numeric columns of ped file
@@ -213,8 +197,9 @@ On your slides, print out:
 
 1. The first ten rows of your <kbd>variants</kbd> table
 2. A ten-by-ten sample of your <kbd>dt.gt1.allele.ceu</kbd> file
-3. A ten-by-ten sample of the corresponding <kbd>dt.gt2.allele.ceu</kbd>
-4. A ten-by-sixteen sample of the object which becomes your fam file
+3. A ten-by-ten sample of the corresponding <kbd>dt.gt2.allele.ceu</kbd> file
+4. A ten-by-sixteen sample of the object which became your ped file
+5. The <kbd>genofile</.kbd> summary
 
 Explain how these files are related.
 
