@@ -199,7 +199,7 @@ On your slides, print out:
 2. A ten-by-ten sample of your <kbd>dt.gt1.allele.ceu</kbd> file
 3. A ten-by-ten sample of the corresponding <kbd>dt.gt2.allele.ceu</kbd> file
 4. A ten-by-sixteen sample of the object which became your ped file
-5. The <kbd>genofile</.kbd> summary
+5. The <kbd>genofile</kbd> summary
 
 Explain how these files are related.
 
