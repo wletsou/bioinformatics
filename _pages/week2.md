@@ -135,6 +135,13 @@ dt.gt2.allele.ceu <- dt.gt2[,mapply(function(X,Y,Z) ifelse(X == 0,Y,Z),.SD,ref,a
 
 This function converts the \\(i\\)<sup>th</sup> column from a number (0 or 1) to the \\(i\\)<sup>th</sup> entry of <kbd>ref</kbd> or <kbd>alt</kbd> depending on its value. &nbsp; The arguments <kbd>.SDcols</kbd> and <kbd>by = .I</kbd> tell <kbd>data.table</kbd> to apply the function rowwise at each column individually.
 
+You can assign the correct variant names to the columns by running
+
+```
+colnames(dt.gt1.allele.ceu) <- variants$rsid
+colnames(dt.gt2.allele.ceu) <- variants$rsid
+```
+
 Before we interleave the columns of these tables to make a ped file, **repeat the above procedure for the YRI and CHB populations** and generate appropriately named data tables.&&nbsp; Be sure to give your tables unique names, or else you will have to run the simulation all over again.
 
 #### Generating a gds file from your ped and map files ####
@@ -142,17 +149,17 @@ Before we interleave the columns of these tables to make a ped file, **repeat th
 Once you have the six data tables <kbd>dt.gt1.allele.ceu</kbd> to <kbd>dt.gt2.allele.chb</kbd>, which should each look something like
 
 ```
-    V1 V2 V3 V4 V5 V6 V7 V8 V9 V10
- 1:  G  A  T  T  C  A  T  C  T   T
- 2:  G  G  T  T  C  A  T  C  T   T
- 3:  G  G  T  T  G  G  T  C  T   T
- 4:  G  G  T  T  G  G  T  C  T   T
- 5:  G  G  T  T  C  A  T  C  T   T
- 6:  G  G  T  T  C  G  T  C  T   T
- 7:  G  G  T  T  C  A  C  C  T   T
- 8:  G  G  T  T  G  G  T  C  T   T
- 9:  G  G  T  T  C  G  T  C  T   T
-10:  G  G  T  T  G  G  T  C  T   T
+    rs74512038 rs144694530 rs28869591 rs9442612 rs6689308 rs11466682 rs61776786 rs8841 rs10907185 rs12125178
+ 1:          C           C          C         A         A          G          G      A          G          G
+ 2:          C           C          C         A         A          G          G      A          G          G
+ 3:          C           C          T         G         A          G          G      T          G          G
+ 4:          C           C          C         G         A          G          A      T          G          G
+ 5:          C           C          C         G         A          G          G      T          G          G
+ 6:          C           C          C         A         A          G          G      A          A          G
+ 7:          C           C          C         A         A          G          A      A          G          G
+ 8:          C           C          C         A         A          G          G      A          A          G
+ 9:          C           C          C         A         A          G          A      A          A          G
+10:          C           C          T         G         A          G          A      T          G          G
 ```
 
 you're ready to make a ped file and convert it into a gds object suitable for <kbd>SNPRelate</kbd> and <kbd>GENESIS</kbd>.&nbsp; First let's create the six numeric columns of the file for our 300 individuals.&nbsp;  All we need is to number individuals/families from 1 to 300 (<kbd>=nrow(dt.gt1.allele.chb) + nrow(dt.gt1.allele.yri) + nrow(dt.gt1.allele.ceu)</kbd>) and ensure they have no parents in the data.&nbsp;  We'll randomly select the subject's sex and for now assume that each individual is unaffected.
@@ -199,6 +206,17 @@ If you have any trouble with this step, you can close all open gds objects with
 ```
 showfile.gds(closeall=TRUE)
 ```
+
+### To turn in (1): ###
+
+On your slides, print out:
+
+1. The first ten rows of your <kbd>variants</kbd> table
+2. A ten-by-ten sample of your <kbd>dt.gt1.allele.ceu</kbd> file
+3. A ten-by-ten sample of the corresponding <kbd>dt.gt2.allele.ceu</kbd>
+4. A ten-by-sixteen sample of the object which becomes your fam file
+
+Explain how these files are related.
 
 ### Kinship analysis ###
 
@@ -322,7 +340,7 @@ Since we are done for now, you may close your genoData object:
 close(genoData)
 ```
 
-### To turn in: ###
+### To turn in (2): ###
 
 Generate PC-Relate plots for each of the CHB, YRI, and CEU populations.&nbsp; For each group, answer:
 1. What is the approximate genetic relationship of the most closely related pair of individuals in each population?
