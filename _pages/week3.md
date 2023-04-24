@@ -109,13 +109,13 @@ logits <- logits + (0 - mean(logits)) # log-odds in a balanced case-control stud
 Now we can convert odds into probability by rearrangeing Eq. (2)\\[p_i=\frac{e^{\beta_0+X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3}}{1+e^{\beta_0+X_{i1}\beta_1+X_{i2}\beta_2+X_{i3}\beta_3}}.\tag{3}\\]In R, we can do
 
 ```
-probs <- exp(logits) / (1 + exp(logits)) # disease probability
+probs <- exp(logits) / (1 + exp(logits)) # disease probability 
 ```
 
 Now we can simulate the binary phenotype by drawing a random number between 0 and 1.&nbsp; If the number is less than <kbd>probs[i]</kbd> for subject <kbd>i</kbd>, then subject <kbd>i</kbd> is a case; otherwise it is a control.&nbsp;  Simulate the phenotypes by
   
 ```
-pheno <- as.numeric(runif(nrow(probs)) <= probs) # generate disease phenotypes
+pheno <- as.numeric(runif(nrow(probs)) <= probs) + 1 # generate disease phenotypes (2 for cases, 1 for controls)
 ```
   
 Verify that the mean of <kbd>pheno</kbd> is close to 0.5.
@@ -180,7 +180,13 @@ colnames(ibd$kinship) <- ibd$sample.id
 rownames(ibd$kinship) <- ibd$sample.id
 ```
 
-Make a plot of the kinship coefficient vs. the IBS0 proportion as we did [before](https://wletsou.github.io/bioinformatics/assignments/week2/#king).  
+Make a plot of the kinship coefficient vs. the IBS0 proportion using
+
+```
+plot(ibd$IBS0,ibd$kinship,ylab = "Kinship coeffecient",xlab = "IBS0",main = "KING relatedness estimation")
+```
+
+There are a lot of data points, so be patient!
 
 We can now close our gds object before moving on to PC-AiR and PC-Relate:
 
@@ -188,11 +194,13 @@ We can now close our gds object before moving on to PC-AiR and PC-Relate:
 closefn.gds(genofile)
 ```
 
-If you have trouble, try
+If ever you have trouble, try
 
 ```
 showfile.gds(closeall = TRUE)
 ```
+
+to close all gds files.
 
 #### PC-AiR, PC-Relate, and the revised GRM ####
 
@@ -242,10 +250,10 @@ With this GRM, we're ready to do the association test.
 
 To measure the SNP effects, we're first going to fit a *null* model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+\sum_jZ_{ij}u_j\tag{9}\\]with ten PCs as fixed effects and all SNPs as random effects and then compare it to a model \\[\log{\left(\frac{p_i}{1-p_i}\right)}=\beta_0+\sum_{j=1}^{10}PC_{ji}\beta_{PC_j}+X_{ik}\beta_k+\sum_jZ_{ij}u_j\tag{10}\\]with a single SNP effect.&nbsp; We will estimate \\(\hat{\beta_k}\\) for each SNP \\(k\\) and estimate its statistical significance.
 
-Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.&nbsp; GENESIS requires us to convert a data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.&nbsp; Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype:
+Fitting models (9) and (10) is not trivial; fortunately, we have the package <kbd>GENESIS</kbd> to help us.&nbsp; GENESIS requires us to convert a data frame \\(\mathbf{X}\\) of fixed effects to a <kbd>ScanAnnotationDataFrame</kbd> object from the package <kbd>GWASTools</kbd>.&nbsp; Your 2000-by-12 data frame should consist of the ten PCs for each subject and the phenotype (0/1 instead of 1/2):
 
 ```
-mydat <- data.frame(scanID = mypcair$sample.id,pc1 = mypcair$vectors[,1],pc2 = mypcair$vectors[,2],pc3 = mypcair$vectors[,3],pc4 = mypcair$vectors[,4],pc5 = mypcair$vectors[,5],pc6 = mypcair$vectors[,6],pc7 = mypcair$vectors[,7],pc8 = mypcair$vectors[,8],pc9 = mypcair$vectors[,9],pc10 = mypcair$vectors[,10],pheno = pheno) # data frame of fixed effects
+mydat <- data.frame(scanID = mypcair$sample.id,pc1 = mypcair$vectors[,1],pc2 = mypcair$vectors[,2],pc3 = mypcair$vectors[,3],pc4 = mypcair$vectors[,4],pc5 = mypcair$vectors[,5],pc6 = mypcair$vectors[,6],pc7 = mypcair$vectors[,7],pc8 = mypcair$vectors[,8],pc9 = mypcair$vectors[,9],pc10 = mypcair$vectors[,10],pheno = pheno - 1) # data frame of fixed effects
 ```
 
 Then convert it to a <kbd>ScanAnnotationDataFrame</kbd> using:
@@ -279,7 +287,7 @@ Are any SNPs above the genome-wide significance level \\(p=5.0\times10^{-8}\\)?&
 assoc[assoc$variant.id %in% disease.snps,]
 ```
 
-and see if the lo-OR estimates <kbd>Est</kbd> agree with the values <kbd>beta</kbd> you previously assigned in 
+and see if the log-OR estimates <kbd>Est</kbd> agree with the values <kbd>beta</kbd> you previously assigned in 
 
 ```
 rbind(beta,freq = apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genotype.matrix))) # view frequency and beta values
@@ -287,7 +295,7 @@ rbind(beta,freq = apply(genotype.matrix[,disease.snps],2,sum) / (2 * nrow(genoty
 
 You may have to multiply <kbd>Est</kbd> by <kbd>-1</kbd> if the allele frequency is reversed.
 
-Finally, we're going to make a QQ (quantile-quantile) plot by sorting the p-values to see if the observed association statistics depart from expectation.&nbsp; If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest quantile greater than or equal to \\(i\\)% of the other quantiles.&nbsp; We compare to this expected p-value to the observed p-value, which represents the probability that a score statistic greater or equal to \\(100p\\)% of other score statistics should have been obtained.&nbdp; Instead of plotting on the nominal scale, we negative-log10 transform each value.&nbsp; Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.&nbsp; We can generate such a plot by
+Finally, we're going to make a QQ (quantile-quantile) plot by sorting the p-values to see if the observed association statistics depart from expectation.&nbsp; If we have one-hundred p-values, we have one-hundred empirical quantiles, with the \\(i\\)<sup>th</sup> largest quantile being greater than or equal to \\(i\\)% of the other quantiles.&nbsp; We compare this expected p-value to the observed p-value, which represents the probability that a score statistic greater or equal to \\(100p\\)% of other score statistics should have been obtained.&nbsp; Instead of plotting on the nominal scale, we negative-log10-transform each value.&nbsp; Departure from expectation is indicated by deparature of the observed statistics from a line though the first and third quantiles.&nbsp; We can generate such a plot by
 
 ```
 qqplot(sort(-log10((1:length(assoc$Score.pval))/length(assoc$Score.pval))),sort(-log10(assoc$Score.pval)),xlab = "Expected −log10(p)",ylab = "Observed −log10(p)",pch = 19)
