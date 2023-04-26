@@ -16,5 +16,5 @@ permalink: /assignments/week3.1/
 2. The sixth column of your ped object is a vector of phenotypes, with 1 indicating control and 2 indicating case.&nbsp; Determine the number of cases and controls in the study.
 3. Import the [matrix](https://raw.githubusercontent.com/wletsou/bioinformatics/master/docs/CEU.simulation.disease_snp_matrix.txt) containg the genotypes (i.e., number of alternative alleles) of the subjects at three disease SNPs.&nbsp; Find and adapt the code to compute the allele frequency of each SNP.
 4. Estimate the odds ratio\\[OR=\frac{P\left(\text{Allele} = 1\mid \text{Case}\right)P\left(\text{Allele} = 0\mid \text{Control}\right)}{P\left(\text{Allele} = 0\mid \text{Case}\right)P\left(\text{Allele} = 1\mid \text{Control}\right)}\\] by extracting the rows of the genotype matrix corresponding to cases and controls.
-5. From the following Manahattan plot<figure>https://github.com/wletsou/bioinformatics/raw/master/docs/Simulation%20Manahattan%20plot.png</figure>
+5. From the following Manahattan plot<figure class="align-center"><a href https://github.com/wletsou/bioinformatics/raw/master/docs/Simulation%20Manahattan%20plot.png></a><figurecaption>Simulation Mahattan plot</figurecaption></figure>
   discuss which SNPs you think were detected in the study.
