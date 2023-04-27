@@ -18,4 +18,5 @@ library(SNPRelate) # no quotes
 
 * [Week 1](https://wletsou.github.io/bioinformatics/assignments/week1)
 * [Week 2](https://wletsou.github.io/bioinformatics/assignments/week2)
-* [Week 3](https://wletsou.github.io/bioinformatics/assignments/week3)
+* [Week 3 (1)](https://wletsou.github.io/bioinformatics/assignments/week3)
+* [Week 3 (2)](https://wletsou.github.io/bioinformatics/assignments/week3.1)
